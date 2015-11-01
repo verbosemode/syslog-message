@@ -1,0 +1,13 @@
+*.swp
+*.native
+*.byte
+_build
+*.mldylib
+*.mllib
+setup.data
+setup.log
+setup.ml
+myocamlbuild.ml
+_tags
+Makefile
+configure
