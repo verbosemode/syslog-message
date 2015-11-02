@@ -17,5 +17,4 @@ Description:
 Library "syslog-message"
   Path: src
   Modules: Syslog_message
-  CompiledObject: byte
   BuildDepends: astring
