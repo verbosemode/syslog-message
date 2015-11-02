@@ -9,14 +9,13 @@ let is_intchar = function
   | '0' .. '9' -> true
   | _ -> false
 
-(* Verify if all chars are valid integers *)
-let all_intchars b =
+let all_intchars s =
   Astring.String.fold_left
     (fun a c -> if (is_intchar c) && a = true then true else false)
-    true b
+    true s
 
-let int_of_day_bytes b =
-  let chars = Astring.String.trim ~drop:(fun c -> c = ' ' || false) b in
+let int_of_day_string s =
+  let chars = Astring.String.trim ~drop:(fun c -> c = ' ' || false) s in
     if all_intchars chars
     then
       let i = int_of_string chars in
@@ -25,11 +24,10 @@ let int_of_day_bytes b =
         else None
     else None
 
-(* Apply validation function prior to converting a string into an int *)
-let valid_int_of_bytes b f =
-  if all_intchars b
+let valid_int_of_string s f =
+  if all_intchars s
   then
-    let i = int_of_string b in
+    let i = int_of_string s in
       if (f i)
       then Some i
       else None
@@ -147,7 +145,7 @@ let facility_of_int = function
   | 23 -> Local7
   | _  -> Invalid_Facility
 
-let bytes_of_facility = function
+let string_of_facility = function
   | Kernel_Message -> "kern"
   | User_Level_Messages -> "user"
   | Mail_System -> "mail"
@@ -207,7 +205,7 @@ let severity_of_int = function
   | 7 -> Debug
   | _ -> Invalid_Severity
 
-let bytes_of_severity = function
+let string_of_severity = function
   | Emergency -> "emerg"
   | Alert -> "alert"
   | Critical -> "crit"
@@ -225,7 +223,7 @@ type timestamp =
    minute : int;
    second : int}
 
-let bytes_of_timestamp ts =
+let string_of_timestamp ts =
   Printf.sprintf "%.2i %.2i %.2i:%.2i:%.2i" ts.month ts.day ts.hour ts.minute
     ts.second
 
@@ -233,45 +231,45 @@ type message =
   {facility  : facility;
    severity  : severity;
    timestamp : timestamp;
-   hostname  : bytes;
-   message   : bytes}
+   hostname  : string;
+   message   : string}
 
-let pp_bytes msg =
-  let facility = bytes_of_facility msg.facility in
-  let severity = bytes_of_severity msg.severity in
+let pp_string msg =
+  let facility = string_of_facility msg.facility in
+  let severity = string_of_severity msg.severity in
     Printf.sprintf "Facility: %s Severity: %s Timestamp: %s Hostname: %s Message: %s\n%!"
-      facility severity (bytes_of_timestamp msg.timestamp) msg.hostname msg.message
+      facility severity (string_of_timestamp msg.timestamp) msg.hostname msg.message
 
 let pp msg =
-  print_string (pp_bytes msg)
+  print_string (pp_string msg)
 
 type ctx =
   {timestamp    : timestamp;
-   hostname     : bytes;
+   hostname     : string;
    set_hostname : bool}
 
 let ctx_hostname ctx hostname = {ctx with hostname}
 let ctx_set_hostname ctx = {ctx with set_hostname=true}
 
-let parse_priority_value b =
-  let l = Bytes.length b in
-    if l > 0 && l < 1025 && (Bytes.get b 0) = '<' then
-      match Astring.String.find (fun x -> x = '>') b with
+let parse_priority_value s =
+  let l = String.length s in
+    if String.get s 0 = '<' then
+      match Astring.String.find (fun x -> x = '>') s with
         Some pri_endmarker ->
           if pri_endmarker > 4 || l <= pri_endmarker + 1
           then None
           else
-            let priority_value_bytes = Bytes.sub b 1 (pri_endmarker - 1) in
-              if all_intchars priority_value_bytes
+            let priority_value_string = String.sub s 1 (pri_endmarker - 1) in
+              if all_intchars priority_value_string
               then
-                let priority_value = int_of_string priority_value_bytes in
+                let priority_value = int_of_string priority_value_string in
                 let facility = facility_of_int (priority_value / 8) in
                 let severity = severity_of_int (priority_value mod 8) in 
                   begin match facility, severity with
                   | Invalid_Facility, _ -> None
                   | _, Invalid_Severity -> None
                   | facility, severity ->
-                      let data = Bytes.sub b (pri_endmarker + 1) (l - pri_endmarker -1) in
+                      let data = String.sub s (pri_endmarker + 1) (l - pri_endmarker -1) in
                         Some (facility, severity, data)
                   end
               else None
@@ -279,21 +277,21 @@ let parse_priority_value b =
     else
       None
 
-let parse_timestamp_rfc3164 b =
+let parse_timestamp_rfc3164 s =
   let tslen = 16 in
-  let l = Bytes.length b in
+  let l = String.length s in
     if l < tslen
     then None
     else 
-      let month = int_of_month_name (Bytes.sub b 0 3) in
-      let day = valid_int_of_bytes
-        (Astring.String.trim ~drop:(fun c -> c = ' ' || false) (Bytes.sub b 4 2))
+      let month = int_of_month_name (String.sub s 0 3) in
+      let day = valid_int_of_string
+        (Astring.String.trim ~drop:(fun c -> c = ' ' || false) (String.sub s 4 2))
         (fun i -> if (i > 0 && i < 32) then true else false) in
-      let hour = valid_int_of_bytes (Bytes.sub b 7 2)
+      let hour = valid_int_of_string (String.sub s 7 2)
         (fun i -> if (i > 0 && i < 24) then true else false) in
-      let minute = valid_int_of_bytes (Bytes.sub b 10 2)
+      let minute = valid_int_of_string (String.sub s 10 2)
         (fun i -> if (i > 0 && i < 59) then true else false) in
-      let second = valid_int_of_bytes (Bytes.sub b 13 2)
+      let second = valid_int_of_string (String.sub s 13 2)
         (fun i -> if (i > 0 && i < 59) then true else false) in
       match month, day, hour, minute, second with
         None, _, _, _, _
@@ -303,43 +301,47 @@ let parse_timestamp_rfc3164 b =
       | _, _, _, _, None -> None
       | Some month, Some day, Some hour, Some minute, Some second ->
         let ts =  {month; day; hour; minute; second} in
-        let data = Bytes.sub b tslen (l - tslen) in
+        let data = String.sub s tslen (l - tslen) in
           Some (ts, data)
 
-let parse_timestamp b ctx =
-  match (parse_timestamp_rfc3164 b) with
+let parse_timestamp s ctx =
+  match (parse_timestamp_rfc3164 s) with
     Some (timestamp, data) -> Some (timestamp, data, ctx)
   | None ->
       let ctx = ctx_set_hostname ctx in
-        Some (ctx.timestamp, b, ctx)
+        Some (ctx.timestamp, s, ctx)
 
-let parse_hostname b ctx =
+let parse_hostname s ctx =
   if ctx.set_hostname
   then
-    Some (ctx.hostname, b)
+    Some (ctx.hostname, s)
   else
-    let l = Bytes.length b in
-      if l > 3 then
-        match Astring.String.find (fun x -> x = ' ') b with
+    let l = String.length s in
+      if l > 1 then
+        match Astring.String.find (fun x -> x = ' ') s with
           None -> None
         | Some i ->
             if i > 0
             then
-              let hostname = Bytes.sub b 0 i in
-              let hostnamelen = Bytes.length hostname in
-              let data = Bytes.sub b (i + 1) (l - i - 1) in
-                if (Bytes.get hostname (hostnamelen - 1)) = ':'
+              let hostname = String.sub s 0 i in
+              let hostnamelen = String.length hostname in
+              let data = String.sub s (i + 1) (l - i - 1) in
+                if (String.get hostname (hostnamelen - 1)) = ':'
                 then
-                  Some (Bytes.sub hostname 0 (hostnamelen - 1), data)
+                  Some (String.sub hostname 0 (hostnamelen - 1), data)
                 else
                   Some (hostname, data)
-
             else None
       else
         None
 
 let parse ?(ctx={timestamp={month=1; day=1; hour=0; minute=0; second=0}; hostname="-"; set_hostname=false}) data =
-  parse_priority_value data >>= fun (facility, severity, data) ->
-  parse_timestamp data ctx >>= fun (timestamp, data, ctx) ->
-  parse_hostname data ctx >>= fun (hostname, data) ->
-    Some {facility; severity; timestamp; hostname; message=data}
+  let l = String.length data in
+    if l > 0 && l < 1025
+    then
+      parse_priority_value data >>= fun (facility, severity, data) ->
+      parse_timestamp data ctx >>= fun (timestamp, data, ctx) ->
+      parse_hostname data ctx >>= fun (hostname, data) ->
+        Some {facility; severity; timestamp; hostname; message=data}
+    else
+      None

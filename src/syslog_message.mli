@@ -1,3 +1,4 @@
+val int_of_day_string : string -> int option
 val int_of_month_name : string -> int option
 val month_name_of_int : int -> string option
 type facility =
@@ -28,7 +29,7 @@ type facility =
   | Invalid_Facility
 val int_of_facility : facility -> int
 val facility_of_int : int -> facility
-val bytes_of_facility : facility -> string
+val string_of_facility : facility -> string
 type severity =
     Emergency
   | Alert
@@ -41,7 +42,7 @@ type severity =
   | Invalid_Severity
 val int_of_severity : severity -> int
 val severity_of_int : int -> severity
-val bytes_of_severity : severity -> string
+val string_of_severity : severity -> string
 type timestamp = {
   month : int;
   day : int;
@@ -49,17 +50,17 @@ type timestamp = {
   minute : int;
   second : int;
 }
-val bytes_of_timestamp : timestamp -> string
+val string_of_timestamp : timestamp -> string
 type message = {
   facility : facility;
   severity : severity;
   timestamp : timestamp;
-  hostname : bytes;
-  message : bytes;
+  hostname : string;
+  message : string;
 }
-val pp_bytes : message -> string
+val pp_string : message -> string
 val pp : message -> unit
-type ctx = { timestamp : timestamp; hostname : bytes; set_hostname : bool; }
-val ctx_hostname : ctx -> bytes -> ctx
+type ctx = { timestamp : timestamp; hostname : string; set_hostname : bool; }
+val ctx_hostname : ctx -> string -> ctx
 val ctx_set_hostname : ctx -> ctx
-val parse : ?ctx:ctx -> bytes -> message option
+val parse : ?ctx:ctx -> string -> message option
