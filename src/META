@@ -1,10 +1,12 @@
 # OASIS_START
-# DO NOT EDIT (digest: 1cefb58870b39f159aaab40bc0f109fc)
+# DO NOT EDIT (digest: aaa30fad67150a2a9a99e2f000ed1673)
 version = "0.0.1"
 description = "Syslog Message Parser"
-requires = "unix astring"
+requires = "astring"
 archive(byte) = "syslog-message.cma"
 archive(byte, plugin) = "syslog-message.cma"
+archive(native) = "syslog-message.cmxa"
+archive(native, plugin) = "syslog-message.cmxs"
 exists_if = "syslog-message.cma"
 # OASIS_STOP
 

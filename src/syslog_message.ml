@@ -50,19 +50,19 @@ let int_of_month_name = function
   | _ -> None
 
 let month_name_of_int = function
-  | 1  -> Some "Jan"
-  | 2  -> Some "Feb"
-  | 3  -> Some "Mar"
-  | 4  -> Some "Apr"
-  | 5  -> Some "May"
-  | 6  -> Some "Jun"
-  | 7  -> Some "Jul"
-  | 8  -> Some "Aug"
-  | 9  -> Some "Sep"
-  | 10 -> Some "Oct"
-  | 11 -> Some "Nov"
-  | 12 -> Some "Dec"
-  | _ -> None
+  | 1  -> "Jan"
+  | 2  -> "Feb"
+  | 3  -> "Mar"
+  | 4  -> "Apr"
+  | 5  -> "May"
+  | 6  -> "Jun"
+  | 7  -> "Jul"
+  | 8  -> "Aug"
+  | 9  -> "Sep"
+  | 10 -> "Oct"
+  | 11 -> "Nov"
+  | 12 -> "Dec"
+  | _ -> failwith "Invalid month integer"
 
 type facility =
   | Kernel_Message
@@ -224,8 +224,16 @@ type timestamp =
    second : int}
 
 let string_of_timestamp ts =
-  Printf.sprintf "%.2i %.2i %.2i:%.2i:%.2i" ts.month ts.day ts.hour ts.minute
+  Printf.sprintf "%s %.2i %.2i:%.2i:%.2i" (month_name_of_int ts.month) ts.day ts.hour ts.minute
     ts.second
+
+type ctx =
+  {timestamp    : timestamp;
+   hostname     : string;
+   set_hostname : bool}
+
+let ctx_hostname ctx hostname = {ctx with hostname}
+let ctx_set_hostname ctx = {ctx with set_hostname=true}
 
 type t =
   {facility  : facility;
@@ -243,13 +251,12 @@ let pp_string msg =
 let pp msg =
   print_string (pp_string msg)
 
-type ctx =
-  {timestamp    : timestamp;
-   hostname     : string;
-   set_hostname : bool}
-
-let ctx_hostname ctx hostname = {ctx with hostname}
-let ctx_set_hostname ctx = {ctx with set_hostname=true}
+let to_string msg =
+  "<" ^ string_of_int ((int_of_facility msg.facility) * 8 +
+    (int_of_severity msg.severity)) ^ ">" ^
+  string_of_timestamp msg.timestamp ^ " " ^
+  msg.hostname ^ " " ^
+  msg.message
 
 let parse_priority_value s =
   let l = String.length s in
@@ -288,13 +295,13 @@ let parse_timestamp_rfc3164 s =
         (Astring.String.trim ~drop:(fun c -> c = ' ' || false) (String.sub s 4 2))
         (fun i -> if (i > 0 && i < 32) then true else false) in
       let hour = valid_int_of_string (String.sub s 7 2)
-        (fun i -> if (i > 0 && i < 24) then true else false) in
+        (fun i -> if (i >= 0 && i < 24) then true else false) in
       let minute = valid_int_of_string (String.sub s 10 2)
-        (fun i -> if (i > 0 && i < 59) then true else false) in
+        (fun i -> if (i >= 0 && i < 59) then true else false) in
       let second = valid_int_of_string (String.sub s 13 2)
-        (fun i -> if (i > 0 && i < 59) then true else false) in
+        (fun i -> if (i >= 0 && i < 59) then true else false) in
       match month, day, hour, minute, second with
-        None, _, _, _, _
+      | None, _, _, _, _ -> None
       | _, None, _, _, _ -> None
       | _, _, None, _, _ -> None
       | _, _, _, None, _ -> None
