@@ -233,6 +233,7 @@ type ctx =
    set_hostname : bool}
 
 let ctx_hostname ctx hostname = {ctx with hostname}
+
 let ctx_set_hostname ctx = {ctx with set_hostname=true}
 
 type t =
@@ -251,13 +252,21 @@ let pp_string msg =
 let pp msg =
   print_string (pp_string msg)
 
-(* TODO truncate to 1024 bytes *)
-let to_string msg =
-  "<" ^ string_of_int ((int_of_facility msg.facility) * 8 +
+let to_string ?(len=1024) msg =
+  let msgstr = "<" ^ string_of_int ((int_of_facility msg.facility) * 8 +
     (int_of_severity msg.severity)) ^ ">" ^
-  string_of_timestamp msg.timestamp ^ " " ^
-  msg.hostname ^ " " ^
-  msg.message
+    string_of_timestamp msg.timestamp ^ " " ^
+    msg.hostname ^ " " ^
+    msg.message
+  in
+    if len > 0
+    then
+      let l = String.length msgstr in
+        if l > len
+        then String.sub msgstr 0 len
+        else msgstr
+    else
+      msgstr
 
 let parse_priority_value s =
   let l = String.length s in
