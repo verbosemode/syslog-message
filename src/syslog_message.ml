@@ -251,6 +251,7 @@ let pp_string msg =
 let pp msg =
   print_string (pp_string msg)
 
+(* TODO truncate to 1024 bytes *)
 let to_string msg =
   "<" ^ string_of_int ((int_of_facility msg.facility) * 8 +
     (int_of_severity msg.severity)) ^ ">" ^
@@ -297,9 +298,9 @@ let parse_timestamp_rfc3164 s =
       let hour = valid_int_of_string (String.sub s 7 2)
         (fun i -> if (i >= 0 && i < 24) then true else false) in
       let minute = valid_int_of_string (String.sub s 10 2)
-        (fun i -> if (i >= 0 && i < 59) then true else false) in
+        (fun i -> if (i >= 0 && i <= 59) then true else false) in
       let second = valid_int_of_string (String.sub s 13 2)
-        (fun i -> if (i >= 0 && i < 59) then true else false) in
+        (fun i -> if (i >= 0 && i <= 59) then true else false) in
       match month, day, hour, minute, second with
       | None, _, _, _, _ -> None
       | _, None, _, _, _ -> None
