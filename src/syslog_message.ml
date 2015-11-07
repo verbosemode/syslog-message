@@ -227,7 +227,7 @@ let string_of_timestamp ts =
   Printf.sprintf "%.2i %.2i %.2i:%.2i:%.2i" ts.month ts.day ts.hour ts.minute
     ts.second
 
-type message =
+type t =
   {facility  : facility;
    severity  : severity;
    timestamp : timestamp;

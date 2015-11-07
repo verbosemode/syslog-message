@@ -71,7 +71,7 @@ type timestamp = {
 val string_of_timestamp : timestamp -> string
 
 (** The type for Syslog messages *)
-type message = {
+type t = {
   facility : facility;
   severity : severity;
   timestamp : timestamp;
@@ -80,10 +80,10 @@ type message = {
 }
 
 (** [pp_string] returns a pretty-printed string of {!type:message} *)
-val pp_string : message -> string
+val pp_string : t -> string
 
 (** [pp] pretty-prints a {!type:message} using print_string *)
-val pp : message -> unit
+val pp : t -> unit
 
 (** [ctx] provides additional information to the {!val:parse} function in case one of the
 sub-parsers fails.
@@ -103,4 +103,4 @@ val ctx_hostname : ctx -> string -> ctx
 val ctx_set_hostname : ctx -> ctx
 
 (** [parse]s a string containing a Syslog message and returns an option {!type:message} *)
-val parse : ?ctx:ctx -> string -> message option
+val parse : ?ctx:ctx -> string -> t option
