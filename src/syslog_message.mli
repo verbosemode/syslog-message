@@ -79,10 +79,10 @@ type t = {
   message : string;
 }
 
-(** [pp_string] returns a pretty-printed string of {!type:message} *)
+(** [pp_string] returns a pretty-printed string of {!type:t} *)
 val pp_string : t -> string
 
-(** [pp] pretty-prints a {!type:message} using print_string *)
+(** [pp] pretty-prints a {!type:t} using print_string *)
 val pp : t -> unit
 
 (** [ctx] provides additional information to the {!val:parse} function in case one of the
@@ -102,5 +102,5 @@ val ctx_hostname : ctx -> string -> ctx
 (** [ctx_set_hostname] *)
 val ctx_set_hostname : ctx -> ctx
 
-(** [parse]s a string containing a Syslog message and returns an option {!type:message} *)
+(** [parse]s a string containing a Syslog message and returns an option {!type:t} *)
 val parse : ?ctx:ctx -> string -> t option
