@@ -2,6 +2,8 @@
 
 This is a parser for [RFC 3164](https://tools.ietf.org/html/rfc3164) Syslog messages.
 
+[![docs](https://img.shields.io/badge/doc-online-blue.svg)](http://verbosemo.de/syslog-message/))
+
     # Syslog_message.parse "<133>Oct  3 15:51:21 server001: foobar";;
     - : Syslog_message.message option =
           Some {Syslog_message.facility = Syslog_message.Local0;
