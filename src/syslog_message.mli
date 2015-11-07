@@ -105,5 +105,5 @@ val pp : t -> unit
 (** [parse]s a string containing a Syslog message and returns an option {!type:t} *)
 val parse : ?ctx:ctx -> string -> t option
 
-(** [to_string] returns a Syslog message as string of type {!type:t} *)
+(** [to_string] returns a Syslog message of type {!type:t} as string *)
 val to_string : t -> string
