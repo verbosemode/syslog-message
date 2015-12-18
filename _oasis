@@ -18,3 +18,8 @@ Library "syslog-message"
   Path: src
   Modules: Syslog_message
   BuildDepends: astring
+
+SourceRepository master
+  Type: git
+  Location: https://github.com/verbosemode/syslog-message.git
+  Browser: https://github.com/verbosemode/syslog-message

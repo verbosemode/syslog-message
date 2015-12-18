@@ -5,6 +5,7 @@ maintainer: "Jochen Bartl <jochenbartl@mailbox.org>"
 authors: [ "Jochen Bartl <jochenbartl@mailbox.org>" ]
 license: "FreeBSD"
 homepage: "https://github.com/verbosemode/syslog-message"
+dev-repo: "https://github.com/verbosemode/syslog-message.git"
 bug-reports: "https://github.com/verbosemode/syslog-message/issues"
 build: [
   ["oasis" "setup"]
