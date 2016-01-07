@@ -1,3 +1,5 @@
+module String = Astring.String
+
 let bind o f =
   match o with
   | None -> None
@@ -10,12 +12,12 @@ let is_intchar = function
   | _ -> false
 
 let all_intchars s =
-  Astring.String.fold_left
+  String.fold_left
     (fun a c -> if (is_intchar c) && a = true then true else false)
     true s
 
 let int_of_day_string s =
-  let chars = Astring.String.trim ~drop:(fun c -> c = ' ' || false) s in
+  let chars = String.trim ~drop:(fun c -> c = ' ' || false) s in
     if all_intchars chars
     then
       let i = int_of_string chars in
@@ -263,7 +265,7 @@ let to_string ?(len=1024) msg =
     then
       let l = String.length msgstr in
         if l > len
-        then String.sub msgstr 0 len
+        then String.with_range ~first:0 ~len:len msgstr
         else msgstr
     else
       msgstr
@@ -271,12 +273,12 @@ let to_string ?(len=1024) msg =
 let parse_priority_value s =
   let l = String.length s in
     if String.get s 0 = '<' then
-      match Astring.String.find (fun x -> x = '>') s with
+      match String.find (fun x -> x = '>') s with
         Some pri_endmarker ->
           if pri_endmarker > 4 || l <= pri_endmarker + 1
           then None
           else
-            let priority_value_string = String.sub s 1 (pri_endmarker - 1) in
+            let priority_value_string = String.with_range ~first:1 ~len:(pri_endmarker - 1) s in
               if all_intchars priority_value_string
               then
                 let priority_value = int_of_string priority_value_string in
@@ -286,7 +288,7 @@ let parse_priority_value s =
                   | Invalid_Facility, _ -> None
                   | _, Invalid_Severity -> None
                   | facility, severity ->
-                      let data = String.sub s (pri_endmarker + 1) (l - pri_endmarker -1) in
+                      let data = String.with_range ~first:(pri_endmarker + 1) ~len:(l - pri_endmarker -1) s in
                         Some (facility, severity, data)
                   end
               else None
@@ -300,15 +302,15 @@ let parse_timestamp_rfc3164 s =
     if l < tslen
     then None
     else 
-      let month = int_of_month_name (String.sub s 0 3) in
+      let month = int_of_month_name (String.with_range ~first:0 ~len:3 s) in
       let day = valid_int_of_string
-        (Astring.String.trim ~drop:(fun c -> c = ' ' || false) (String.sub s 4 2))
+        (String.trim ~drop:(fun c -> c = ' ' || false) (String.with_range ~first:4 ~len:2 s))
         (fun i -> if (i > 0 && i < 32) then true else false) in
-      let hour = valid_int_of_string (String.sub s 7 2)
+      let hour = valid_int_of_string (String.with_range ~first:7 ~len:2 s)
         (fun i -> if (i >= 0 && i < 24) then true else false) in
-      let minute = valid_int_of_string (String.sub s 10 2)
+      let minute = valid_int_of_string (String.with_range ~first:10 ~len:2 s)
         (fun i -> if (i >= 0 && i <= 59) then true else false) in
-      let second = valid_int_of_string (String.sub s 13 2)
+      let second = valid_int_of_string (String.with_range ~first:13 ~len:2 s)
         (fun i -> if (i >= 0 && i <= 59) then true else false) in
       match month, day, hour, minute, second with
       | None, _, _, _, _ -> None
@@ -318,7 +320,7 @@ let parse_timestamp_rfc3164 s =
       | _, _, _, _, None -> None
       | Some month, Some day, Some hour, Some minute, Some second ->
         let ts =  {month; day; hour; minute; second} in
-        let data = String.sub s tslen (l - tslen) in
+        let data = String.with_range ~first:tslen ~len:(l - tslen) s in
           Some (ts, data)
 
 let parse_timestamp s ctx =
@@ -335,17 +337,17 @@ let parse_hostname s ctx =
   else
     let l = String.length s in
       if l > 1 then
-        match Astring.String.find (fun x -> x = ' ') s with
+        match String.find (fun x -> x = ' ') s with
           None -> None
         | Some i ->
             if i > 0
             then
-              let hostname = String.sub s 0 i in
+              let hostname = String.with_range ~first:0 ~len:i s in
               let hostnamelen = String.length hostname in
-              let data = String.sub s (i + 1) (l - i - 1) in
+              let data = String.with_range ~first:(i + 1) ~len:(l - i - 1) s in
                 if (String.get hostname (hostnamelen - 1)) = ':'
                 then
-                  Some (String.sub hostname 0 (hostnamelen - 1), data)
+                  Some (String.with_range ~first:0 ~len:(hostnamelen - 1) hostname, data)
                 else
                   Some (hostname, data)
             else None
