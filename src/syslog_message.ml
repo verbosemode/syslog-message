@@ -7,35 +7,6 @@ let bind o f =
 
 let (>>=) o f = bind o f
 
-let is_intchar = function
-  | '0' .. '9' -> true
-  | _ -> false
-
-let all_intchars s =
-  String.fold_left
-    (fun a c -> if (is_intchar c) && a = true then true else false)
-    true s
-
-let int_of_day_string s =
-  let chars = String.trim ~drop:(fun c -> c = ' ' || false) s in
-    if all_intchars chars
-    then
-      let i = int_of_string chars in
-        if i > 0 && i < 32
-        then Some i
-        else None
-    else None
-
-let valid_int_of_string s f =
-  if all_intchars s
-  then
-    let i = int_of_string s in
-      if (f i)
-      then Some i
-      else None
-  else
-    None
-
 let int_of_month_name = function
   | "Jan" -> Some 1
   | "Feb" -> Some 2
@@ -274,24 +245,23 @@ let parse_priority_value s =
   let l = String.length s in
     if String.get s 0 = '<' then
       match String.find (fun x -> x = '>') s with
-        Some pri_endmarker ->
+      | Some pri_endmarker ->
           if pri_endmarker > 4 || l <= pri_endmarker + 1
           then None
           else
-            let priority_value_string = String.with_range ~first:1 ~len:(pri_endmarker - 1) s in
-              if all_intchars priority_value_string
-              then
-                let priority_value = int_of_string priority_value_string in
+            begin match (String.with_range ~first:1 ~len:(pri_endmarker - 1) s |> String.to_int) with
+            | Some priority_value ->
                 let facility = facility_of_int (priority_value / 8) in
                 let severity = severity_of_int (priority_value mod 8) in 
-                  begin match facility, severity with
-                  | Invalid_Facility, _ -> None
-                  | _, Invalid_Severity -> None
-                  | facility, severity ->
-                      let data = String.with_range ~first:(pri_endmarker + 1) ~len:(l - pri_endmarker -1) s in
-                        Some (facility, severity, data)
-                  end
-              else None
+                begin match facility, severity with
+                | Invalid_Facility, _ -> None
+                | _, Invalid_Severity -> None
+                | facility, severity ->
+                    let data = String.with_range ~first:(pri_endmarker + 1) ~len:(l - pri_endmarker -1) s in
+                      Some (facility, severity, data)
+                end
+            | None -> None
+            end
       | None -> None
     else
       None
@@ -303,15 +273,10 @@ let parse_timestamp_rfc3164 s =
     then None
     else 
       let month = int_of_month_name (String.with_range ~first:0 ~len:3 s) in
-      let day = valid_int_of_string
-        (String.trim ~drop:(fun c -> c = ' ' || false) (String.with_range ~first:4 ~len:2 s))
-        (fun i -> if (i > 0 && i < 32) then true else false) in
-      let hour = valid_int_of_string (String.with_range ~first:7 ~len:2 s)
-        (fun i -> if (i >= 0 && i < 24) then true else false) in
-      let minute = valid_int_of_string (String.with_range ~first:10 ~len:2 s)
-        (fun i -> if (i >= 0 && i <= 59) then true else false) in
-      let second = valid_int_of_string (String.with_range ~first:13 ~len:2 s)
-        (fun i -> if (i >= 0 && i <= 59) then true else false) in
+      let day = String.with_range ~first:4 ~len:2 s |> String.trim |> String.to_int in
+      let hour = String.with_range ~first:7 ~len:2 s |> String.to_int in
+      let minute = String.with_range ~first:10 ~len:2 s |> String.to_int in
+      let second = String.with_range ~first:13 ~len:2 s |> String.to_int in
       match month, day, hour, minute, second with
       | None, _, _, _, _ -> None
       | _, None, _, _, _ -> None
@@ -319,6 +284,9 @@ let parse_timestamp_rfc3164 s =
       | _, _, _, None, _ -> None
       | _, _, _, _, None -> None
       | Some month, Some day, Some hour, Some minute, Some second ->
+        (* Year is unknown, need to get it from ctx timestamp 
+         * -> Not possible to just use 0 because of leap years *)
+        (* begin match Ptime.of_date_time ((2016, 12, 31), ((23, 59, 59), 0)) *)
         let ts =  {month; day; hour; minute; second} in
         let data = String.with_range ~first:tslen ~len:(l - tslen) s in
           Some (ts, data)
@@ -338,7 +306,7 @@ let parse_hostname s ctx =
     let l = String.length s in
       if l > 1 then
         match String.find (fun x -> x = ' ') s with
-          None -> None
+        | None -> None
         | Some i ->
             if i > 0
             then
