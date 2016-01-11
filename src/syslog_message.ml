@@ -189,19 +189,13 @@ let string_of_severity = function
   | Debug -> "debug"
   | Invalid_Severity -> "invalid"
 
-type timestamp =
-  {month  : int;
-   day    : int;
-   hour   : int;
-   minute : int;
-   second : int}
-
 let string_of_timestamp ts =
-  Printf.sprintf "%s %.2i %.2i:%.2i:%.2i" (month_name_of_int ts.month) ts.day ts.hour ts.minute
-    ts.second
+  match Ptime.to_date_time ts with
+  | ((_, month, day), ((hour, min, sec), _)) ->
+      Printf.sprintf "%s %.2i %.2i:%.2i:%.2i" (month_name_of_int month) day hour min sec
 
 type ctx =
-  {timestamp    : timestamp;
+  {timestamp    : Ptime.t;
    hostname     : string;
    set_hostname : bool}
 
@@ -212,7 +206,7 @@ let ctx_set_hostname ctx = {ctx with set_hostname=true}
 type t =
   {facility  : facility;
    severity  : severity;
-   timestamp : timestamp;
+   timestamp : Ptime.t;
    hostname  : string;
    message   : string}
 
@@ -266,7 +260,7 @@ let parse_priority_value s =
     else
       None
 
-let parse_timestamp_rfc3164 s =
+let parse_timestamp_rfc3164 s year =
   let tslen = 16 in
   let l = String.length s in
     if l < tslen
@@ -283,17 +277,21 @@ let parse_timestamp_rfc3164 s =
       | _, _, None, _, _ -> None
       | _, _, _, None, _ -> None
       | _, _, _, _, None -> None
-      | Some month, Some day, Some hour, Some minute, Some second ->
-        (* Year is unknown, need to get it from ctx timestamp 
-         * -> Not possible to just use 0 because of leap years *)
-        (* begin match Ptime.of_date_time ((2016, 12, 31), ((23, 59, 59), 0)) *)
-        let ts =  {month; day; hour; minute; second} in
-        let data = String.with_range ~first:tslen ~len:(l - tslen) s in
-          Some (ts, data)
+      | Some month, Some day, Some hour, Some min, Some sec ->
+        begin match Ptime.of_date_time ((year, month, day), ((hour, min, sec), 0)) with
+        | Some ts ->
+            let data = String.with_range ~first:tslen ~len:(l - tslen) s in
+              Some (ts, data)
+        | None -> None
+        end
 
-let parse_timestamp s ctx =
-  match (parse_timestamp_rfc3164 s) with
-    Some (timestamp, data) -> Some (timestamp, data, ctx)
+let parse_timestamp s (ctx : ctx) =
+  let year =
+    match Ptime.to_date_time ctx.timestamp with
+    | ((y, _, _), _) -> y
+  in
+  match parse_timestamp_rfc3164 s year with
+  | Some (timestamp, data) -> Some (timestamp, data, ctx)
   | None ->
       let ctx = ctx_set_hostname ctx in
         Some (ctx.timestamp, s, ctx)
@@ -322,7 +320,10 @@ let parse_hostname s ctx =
       else
         None
 
-let parse ?(ctx={timestamp={month=1; day=1; hour=0; minute=0; second=0}; hostname="-"; set_hostname=false}) data =
+(* FIXME Provide default Ptime.t? Version bellow doesn't work. Option type
+let parse ?(ctx={timestamp=(Ptime.of_date_time ((1970, 1, 1), ((0, 0,0), 0))); hostname="-"; set_hostname=false}) data =
+*)
+let parse ~ctx data =
   let l = String.length data in
     if l > 0 && l < 1025
     then

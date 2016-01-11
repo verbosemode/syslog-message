@@ -58,17 +58,8 @@ val severity_of_int : int -> severity
 (** Converts a {!type:severity} into a string *)
 val string_of_severity : severity -> string
 
-(** The type for RFC 3164 compatible timestamps *)
-type timestamp = {
-  month : int;
-  day : int;
-  hour : int;
-  minute : int;
-  second : int;
-}
-
 (** [string_of_timestamp] Converts a {!type:timestamp} into a string *)
-val string_of_timestamp : timestamp -> string
+val string_of_timestamp : Ptime.t -> string
 
 (** [ctx] provides additional information to the {!val:parse} function in case one of the
 sub-parsers fails.
@@ -79,7 +70,7 @@ sub-parser and use the hostname from {!type:ctx} instead.
 
 [set_hostname] is automatically set by the timestamp sub-parser when it fails, because at this
 point it is no longer possible to determine the hostname from the input string. *)
-type ctx = { timestamp : timestamp; hostname : string; set_hostname : bool; }
+type ctx = { timestamp : Ptime.t; hostname : string; set_hostname : bool; }
 
 (** [ctx_hostname] sets a new hostname in {!type:ctx} *)
 val ctx_hostname : ctx -> string -> ctx
@@ -91,7 +82,7 @@ val ctx_set_hostname : ctx -> ctx
 type t = {
   facility : facility;
   severity : severity;
-  timestamp : timestamp;
+  timestamp : Ptime.t;
   hostname : string;
   message : string;
 }
@@ -103,7 +94,7 @@ val pp_string : t -> string
 val pp : t -> unit
 
 (** [parse]s a string containing a Syslog message and returns an option {!type:t} *)
-val parse : ?ctx:ctx -> string -> t option
+val parse : ctx:ctx -> string -> t option
 
 (** [to_string] returns a Syslog message of type {!type:t} as string.
 The output string is truncated to 1024 bytes, which is the default of [len].
