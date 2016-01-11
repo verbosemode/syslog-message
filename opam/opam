@@ -26,5 +26,6 @@ depends: [
   "astring"
   "oasis" {build & >= "0.4"}
   "ocamlfind" {build}
+  "ptime"
 ]
 available: [ ocaml-version >= "4.02.3" ]

@@ -17,7 +17,7 @@ Description:
 Library "syslog-message"
   Path: src
   Modules: Syslog_message
-  BuildDepends: astring
+  BuildDepends: astring, ptime
 
 SourceRepository master
   Type: git
