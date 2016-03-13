@@ -236,26 +236,23 @@ let to_string ?(len=1024) msg =
 
 let parse_priority_value s =
   let l = String.length s in
-  if String.get s 0 = '<' then
+  if String.get s 0 <> '<' then None else
     match String.find (fun x -> x = '>') s with
     | None -> None
     | Some pri_endmarker when pri_endmarker > 4 || l <= pri_endmarker + 1 ->
       None
     | Some pri_endmarker ->
       match String.with_range ~first:1 ~len:(pri_endmarker - 1) s |> String.to_int with
+      | None -> None
       | Some priority_value ->
           let facility = facility_of_int (priority_value / 8) in
           let severity = severity_of_int (priority_value mod 8) in
-          begin match facility, severity with
+          match facility, severity with
           | Invalid_Facility, _ -> None
           | _, Invalid_Severity -> None
           | facility, severity ->
               let data = String.with_range ~first:(pri_endmarker + 1) ~len:(l - pri_endmarker -1) s in
                 Some (facility, severity, data)
-          end
-      | None -> None
-  else
-    None
 
 let parse_timestamp_rfc3164 s year =
   let tslen = 16 in
