@@ -190,9 +190,8 @@ let string_of_severity = function
   | Invalid_Severity -> "invalid"
 
 let string_of_timestamp ts =
-  match Ptime.to_date_time ts with
-  | ((_, month, day), ((hour, min, sec), _)) ->
-      Printf.sprintf "%s %.2i %.2i:%.2i:%.2i" (month_name_of_int month) day hour min sec
+  let ((_, month, day), ((hour, min, sec), _)) = Ptime.to_date_time ts in
+    Printf.sprintf "%s %.2i %.2i:%.2i:%.2i" (month_name_of_int month) day hour min sec
 
 type ctx =
   {timestamp    : Ptime.t;
@@ -245,8 +244,8 @@ let parse_priority_value s =
       match String.with_range ~first:1 ~len:(pri_endmarker - 1) s |> String.to_int with
       | None -> None
       | Some priority_value ->
-          let facility = facility_of_int (priority_value / 8) in
-          let severity = severity_of_int (priority_value mod 8) in
+          let facility = facility_of_int @@ priority_value / 8 in
+          let severity = severity_of_int @@ priority_value mod 8 in
           match facility, severity with
           | Invalid_Facility, _ -> None
           | _, Invalid_Severity -> None
@@ -259,7 +258,7 @@ let parse_timestamp_rfc3164 s year =
   match String.length s with
   | l when l < tslen -> None
   | l ->
-    let month = int_of_month_name (String.with_range ~first:0 ~len:3 s) in
+    let month = int_of_month_name @@ String.with_range ~first:0 ~len:3 s in
     let day = String.with_range ~first:4 ~len:2 s |> String.trim |> String.to_int in
     let hour = String.with_range ~first:7 ~len:2 s |> String.to_int in
     let minute = String.with_range ~first:10 ~len:2 s |> String.to_int in
@@ -278,10 +277,7 @@ let parse_timestamp_rfc3164 s year =
       | None -> None
 
 let parse_timestamp s (ctx : ctx) =
-  let year =
-    match Ptime.to_date_time ctx.timestamp with
-    | ((y, _, _), _) -> y
-  in
+  let ((year, _, _), _) = Ptime.to_date_time ctx.timestamp in
   match parse_timestamp_rfc3164 s year with
   | Some (timestamp, data) -> Some (timestamp, data, ctx)
   | None ->
