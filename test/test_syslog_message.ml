@@ -42,9 +42,9 @@ let valid_data_succeeds = QCheck.mk_test ~n:100
   QCheck.Arbitrary.(triple priority ptime hostname)
   @@ fun (pri, pt, host) ->
     QCheck.Prop.assume (pt <> None);
-    let ctx = {Smsg.timestamp=Ptime.epoch;
-               Smsg.hostname="";
-               Smsg.set_hostname=false} in
+    let ctx = Smsg.{timestamp=Ptime.epoch;
+                    hostname="";
+                    set_hostname=false} in
     match pt with
     | None -> false
     | Some pt ->
@@ -59,9 +59,9 @@ let invalid_data_fails = QCheck.mk_test ~n:100
   ~name:"Check that putting in invalid data always fails"
   QCheck.Arbitrary.(string)
   @@ fun msg ->
-    let ctx = {Smsg.timestamp=Ptime.epoch;
-               Smsg.hostname="";
-               Smsg.set_hostname=false} in
+    let ctx = Smsg.{timestamp=Ptime.epoch;
+                    hostname="";
+                    set_hostname=false} in
     Smsg.parse ctx msg = None
 
 let () =
