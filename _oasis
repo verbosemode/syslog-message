@@ -19,13 +19,21 @@ Library "syslog-message"
   Modules: Syslog_message
   BuildDepends: astring, ptime
 
-Executable "test-syslog-message"
+Executable "test_syslog_message"
   Path: src
   MainIs: test_syslog_message.ml
+  Build$: flag(tests)
+  Install: false
   BuildDepends: qcheck
   ByteOpt: -safe-string
   NativeOpt: -safe-string
   CompiledObject: best
+
+Test "test-syslog-message"
+  Run$: flag(tests)
+  TestTools: test_syslog_message
+  Command: $test_syslog_message
+  WorkingDirectory: src
 
 SourceRepository master
   Type: git

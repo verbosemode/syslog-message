@@ -10,3 +10,18 @@ This is a parser for [RFC 3164](https://tools.ietf.org/html/rfc3164) Syslog mess
 	- : Syslog_message.t option =
 	Some {Syslog_message.facility = Syslog_message.Local0; severity = Syslog_message.Notice; timestamp = <abstr>;
 	  hostname = "server001"; message = "foobar"}
+
+## Building
+
+```sh
+oasis setup
+make
+```
+
+## Testing
+
+```sh
+oasis setup
+ocaml setup.ml -configure --enable-tests
+make tests
+```
