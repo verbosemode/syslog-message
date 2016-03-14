@@ -19,6 +19,14 @@ Library "syslog-message"
   Modules: Syslog_message
   BuildDepends: astring, ptime
 
+Executable "test-syslog-message"
+  Path: src
+  MainIs: test_syslog_message.ml
+  BuildDepends: qcheck
+  ByteOpt: -safe-string
+  NativeOpt: -safe-string
+  CompiledObject: best
+
 SourceRepository master
   Type: git
   Location: https://github.com/verbosemode/syslog-message.git
