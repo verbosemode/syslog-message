@@ -18,13 +18,14 @@ Description:
 Library "syslog-message"
   Path: src
   Modules: Syslog_message
+  FindLibName: syslog-message
 
 Executable "test_syslog_message"
-  Path: src
+  Path: test
   MainIs: test_syslog_message.ml
   Build$: flag(tests)
   Install: false
-  BuildDepends: qcheck
+  BuildDepends: syslog-message, qcheck
   ByteOpt: -safe-string
   NativeOpt: -safe-string
   CompiledObject: best
@@ -33,7 +34,7 @@ Test "test-syslog-message"
   Run$: flag(tests)
   TestTools: test_syslog_message
   Command: $test_syslog_message
-  WorkingDirectory: src
+  WorkingDirectory: test
 
 SourceRepository master
   Type: git
