@@ -1,4 +1,4 @@
-module String = Astring.String
+open Astring
 
 let bind o f =
   match o with
