@@ -1,6 +1,7 @@
 module Smsg = Syslog_message
 
-let priority = QCheck.Arbitrary.int 256
+(* 8 severities * 23 facilities *)
+let priority = QCheck.Arbitrary.int 184
 
 let ptime =
   let open QCheck.Arbitrary in
@@ -48,7 +49,7 @@ let valid_data_succeeds = QCheck.mk_test ~n:100
     match pt with
     | None -> false
     | Some pt ->
-      let msg = Printf.sprintf "<%d> %s %s: Whatever"
+      let msg = Printf.sprintf "<%d>%s %s: Whatever"
         pri (string_of_ptime pt) host in
       match Smsg.parse ctx msg with
       | None -> false
