@@ -54,6 +54,11 @@ let valid_data_succeeds = QCheck.mk_test ~n:100
       match Smsg.parse ctx msg with
       | None -> false
       | Some parsed ->
+        let ((_, m, d), ((hh, mm, ss), _)) =
+          Ptime.to_date_time parsed.Smsg.timestamp in
+        let ((_, m', d'), ((hh', mm', ss'), _)) =
+          Ptime.to_date_time pt in
+        m = m' && d = d' && hh = hh' && mm = mm' && ss = ss' &&
         parsed.Smsg.hostname = host
 
 let invalid_data_fails = QCheck.mk_test ~n:100
