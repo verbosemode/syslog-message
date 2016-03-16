@@ -38,7 +38,7 @@ let pp_ptime = function
   | Some pt -> string_of_ptime pt
 
 let valid_data_succeeds = QCheck.mk_test ~n:100
-  ~name:"Check that generating valid data gets a reasonable result"
+  ~name:"generating valid data gets a reasonable result"
   ~pp:QCheck.PP.(triple int pp_ptime string)
   QCheck.Arbitrary.(triple priority ptime hostname)
   @@ fun (pri, pt, host) ->
@@ -62,8 +62,8 @@ let valid_data_succeeds = QCheck.mk_test ~n:100
         parsed.Smsg.hostname = host
 
 let invalid_data_fails = QCheck.mk_test ~n:100
-  ~name:"Check that putting in invalid data always fails"
-  QCheck.Arbitrary.(string)
+  ~name:"putting in invalid data always fails"
+  QCheck.Arbitrary.string
   @@ fun msg ->
     let ctx = Smsg.{timestamp=Ptime.epoch;
                     hostname="";
