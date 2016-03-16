@@ -61,6 +61,25 @@ let valid_data_succeeds = QCheck.mk_test ~n:100
         m = m' && d = d' && hh = hh' && mm = mm' && ss = ss' &&
         parsed.Smsg.hostname = host
 
+let invalid_timestamp = QCheck.mk_test ~n:100
+  ~name:"parser substitutes the timestamp when it can't be parsed"
+  ~pp:QCheck.PP.(quad int pp_ptime string string)
+  QCheck.Arbitrary.(quad priority ptime string hostname)
+  @@ fun (pri, valid, invalid, host) ->
+    QCheck.Prop.assume (valid <> None);
+    match valid with
+    | None -> false
+    | Some valid ->
+      let msg = Printf.sprintf "<%d>%s %s: Whatever"
+        pri invalid host in
+      let ctx = Smsg.{timestamp=valid;
+                      hostname="";
+                      set_hostname=false} in
+      match Smsg.parse ctx msg with
+      | None -> false
+      | Some parsed ->
+        Smsg.(parsed.timestamp = valid)
+
 let invalid_data_fails = QCheck.mk_test ~n:100
   ~name:"putting in invalid data always fails"
   QCheck.Arbitrary.string
@@ -71,5 +90,6 @@ let invalid_data_fails = QCheck.mk_test ~n:100
     Smsg.parse ctx msg = None
 
 let () =
-  let suite = [invalid_data_fails; valid_data_succeeds] in
+  let suite = [invalid_data_fails; valid_data_succeeds;
+               invalid_timestamp] in
   if not (QCheck.run_tests suite) then exit 1 else ()
