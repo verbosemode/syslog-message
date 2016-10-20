@@ -190,8 +190,8 @@ let string_of_severity = function
   | Invalid_Severity -> "invalid"
 
 let string_of_timestamp ts =
-  let ((_, month, day), ((hour, min, sec), _)) = Ptime.to_date_time ts in
-    Printf.sprintf "%s %.2i %.2i:%.2i:%.2i" (month_name_of_int month) day hour min sec
+  let ((_, month, day), ((h, m, s), _)) = Ptime.to_date_time ts in
+  Printf.sprintf "%s %.2i %.2i:%.2i:%.2i" (month_name_of_int month) day h m s
 
 type ctx =
   {timestamp    : Ptime.t;
@@ -210,59 +210,62 @@ type t =
    message   : string}
 
 let pp_string msg =
-  let facility = string_of_facility msg.facility in
-  let severity = string_of_severity msg.severity in
-    Printf.sprintf "Facility: %s Severity: %s Timestamp: %s Hostname: %s Message: %s\n%!"
-      facility severity (string_of_timestamp msg.timestamp) msg.hostname msg.message
+  let facility = string_of_facility msg.facility
+  and severity = string_of_severity msg.severity
+  and timestamp = string_of_timestamp msg.timestamp
+  in
+  Printf.sprintf
+    "Facility: %s Severity: %s Timestamp: %s Hostname: %s Message: %s\n%!"
+    facility severity timestamp msg.hostname msg.message
 
-let pp msg =
-  print_string (pp_string msg)
+let pp msg = print_string (pp_string msg)
 
 let to_string ?(len=1024) msg =
-  let msgstr = "<" ^ string_of_int ((int_of_facility msg.facility) * 8 +
-    (int_of_severity msg.severity)) ^ ">" ^
-    string_of_timestamp msg.timestamp ^ " " ^
-    msg.hostname ^ " " ^
-    msg.message
+  let facse = int_of_facility msg.facility * 8 + int_of_severity msg.severity
+  and ts = string_of_timestamp msg.timestamp
   in
-    if len > 0
-    then
-      match String.length msgstr with
-      | l when l > len -> String.with_range ~first:0 ~len:len msgstr
-      | _ -> msgstr
-    else
-      msgstr
+  let msgstr = Printf.sprintf "<%d>%s %s %s" facse ts msg.hostname msg.message
+  in
+  if len > 0 && String.length msgstr > len then
+    String.with_range ~first:0 ~len:len msgstr
+  else
+    msgstr
 
 let parse_priority_value s =
   let l = String.length s in
-  if String.get s 0 <> '<' then None else
+  if String.get s 0 <> '<' then
+    None
+  else
     match String.find (fun x -> x = '>') s with
     | None -> None
-    | Some pri_endmarker when pri_endmarker > 4 || l <= pri_endmarker + 1 ->
-      None
-    | Some pri_endmarker ->
-      match String.with_range ~first:1 ~len:(pri_endmarker - 1) s |> String.to_int with
+    | Some pri_end when pri_end > 4 || l <= pri_end + 1 -> None
+    | Some pri_end ->
+      match String.with_range ~first:1 ~len:(pri_end - 1) s |> String.to_int with
       | None -> None
       | Some priority_value ->
-          let facility = facility_of_int @@ priority_value / 8 in
-          let severity = severity_of_int @@ priority_value mod 8 in
-          match facility, severity with
-          | Invalid_Facility, _ -> None
-          | _, Invalid_Severity -> None
-          | facility, severity ->
-              let data = String.with_range ~first:(pri_endmarker + 1) ~len:(l - pri_endmarker -1) s in
-                Some (facility, severity, data)
+        let facility = facility_of_int @@ priority_value / 8
+        and severity = severity_of_int @@ priority_value mod 8
+        in
+        match facility, severity with
+        | Invalid_Facility, _ -> None
+        | _, Invalid_Severity -> None
+        | facility, severity ->
+          let first = succ pri_end in
+          let len = l - first in
+          let data = String.with_range ~first ~len s in
+          Some (facility, severity, data)
 
 let parse_timestamp_rfc3164 s year =
+  let open String in
   let tslen = 16 in
-  match String.length s with
+  match length s with
   | l when l < tslen -> None
   | l ->
-    let month = int_of_month_name @@ String.with_range ~first:0 ~len:3 s in
-    let day = String.with_range ~first:4 ~len:2 s |> String.trim |> String.to_int in
-    let hour = String.with_range ~first:7 ~len:2 s |> String.to_int in
-    let minute = String.with_range ~first:10 ~len:2 s |> String.to_int in
-    let second = String.with_range ~first:13 ~len:2 s |> String.to_int in
+    let month = int_of_month_name @@ with_range ~first:0 ~len:3 s in
+    let day = with_range ~first:4 ~len:2 s |> trim |> to_int in
+    let hour = with_range ~first:7 ~len:2 s |> to_int in
+    let minute = with_range ~first:10 ~len:2 s |> to_int in
+    let second = with_range ~first:13 ~len:2 s |> to_int in
     match month, day, hour, minute, second with
     | None, _, _, _, _ -> None
     | _, None, _, _, _ -> None
@@ -271,38 +274,35 @@ let parse_timestamp_rfc3164 s year =
     | _, _, _, _, None -> None
     | Some month, Some day, Some hour, Some min, Some sec ->
       match Ptime.of_date_time ((year, month, day), ((hour, min, sec), 0)) with
-      | Some ts ->
-          let data = String.with_range ~first:tslen ~len:(l - tslen) s in
-            Some (ts, data)
       | None -> None
+      | Some ts -> Some (ts, with_range ~first:tslen ~len:(l - tslen) s)
 
 let parse_timestamp s (ctx : ctx) =
   let ((year, _, _), _) = Ptime.to_date_time ctx.timestamp in
   match parse_timestamp_rfc3164 s year with
   | Some (timestamp, data) -> Some (timestamp, data, ctx)
   | None ->
-      let ctx = ctx_set_hostname ctx in
-        Some (ctx.timestamp, s, ctx)
+    let ctx = ctx_set_hostname ctx in
+    Some (ctx.timestamp, s, ctx)
 
 let parse_hostname s ctx =
-  if ctx.set_hostname
-  then
+  if ctx.set_hostname then
     Some (ctx.hostname, s)
   else
     match String.length s with
     | l when l > 1 ->
-        (match String.find (fun x -> x = ' ') s with
-        | Some i when i > 0 ->
-              let hostname = String.with_range ~first:0 ~len:i s in
-              let hostnamelen = String.length hostname in
-              let data = String.with_range ~first:(i + 1) ~len:(l - i - 1) s in
-                if (String.get hostname (hostnamelen - 1)) = ':'
-                then
-                  Some (String.with_range ~first:0 ~len:(hostnamelen - 1) hostname, data)
-                else
-                  Some (hostname, data)
-        | _ -> None)
-   | _ -> None
+      (match String.find (fun x -> x = ' ') s with
+       | Some i when i > 0 ->
+         let hostname = String.with_range ~first:0 ~len:i s in
+         let hostnamelen = String.length hostname in
+         let data = String.with_range ~first:(i + 1) ~len:(l - i - 1) s in
+         let len = pred hostnamelen in
+         if String.get hostname len = ':' then
+           Some (String.with_range ~first:0 ~len hostname, data)
+         else
+           Some (hostname, data)
+       | _ -> None)
+    | _ -> None
 
 (* FIXME Provide default Ptime.t? Version bellow doesn't work. Option type
 let parse ?(ctx={timestamp=(Ptime.of_date_time ((1970, 1, 1), ((0, 0,0), 0))); hostname="-"; set_hostname=false}) data =
@@ -310,8 +310,8 @@ let parse ?(ctx={timestamp=(Ptime.of_date_time ((1970, 1, 1), ((0, 0,0), 0))); h
 let parse ~ctx data =
   match String.length data with
   | l when l > 0 && l < 1025 ->
-      parse_priority_value data >>= fun (facility, severity, data) ->
-      parse_timestamp data ctx >>= fun (timestamp, data, ctx) ->
-      parse_hostname data ctx >>= fun (hostname, data) ->
-        Some {facility; severity; timestamp; hostname; message=data}
+    parse_priority_value data >>= fun (facility, severity, data) ->
+    parse_timestamp data ctx >>= fun (timestamp, data, ctx) ->
+    parse_hostname data ctx >>= fun (hostname, data) ->
+    Some {facility; severity; timestamp; hostname; message=data}
   | _ -> None
