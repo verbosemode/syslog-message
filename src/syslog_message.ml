@@ -243,8 +243,9 @@ let parse_priority_value s =
       match String.with_range ~first:1 ~len:(pri_end - 1) s |> String.to_int with
       | None -> None
       | Some priority_value ->
-        let facility = facility_of_int @@ priority_value / 8 in
-        let severity = severity_of_int @@ priority_value mod 8 in
+        let facility = facility_of_int @@ priority_value / 8
+        and severity = severity_of_int @@ priority_value mod 8
+        in
         match facility, severity with
         | Invalid_Facility, _ -> None
         | _, Invalid_Severity -> None
@@ -290,18 +291,17 @@ let parse_hostname s ctx =
   else
     match String.length s with
     | l when l > 1 ->
-      begin match String.find (fun x -> x = ' ') s with
-        | Some i when i > 0 ->
-          let hostname = String.with_range ~first:0 ~len:i s in
-          let hostnamelen = String.length hostname in
-          let data = String.with_range ~first:(i + 1) ~len:(l - i - 1) s in
-          let len = pred hostnamelen in
-          if String.get hostname len = ':' then
-            Some (String.with_range ~first:0 ~len hostname, data)
-          else
-            Some (hostname, data)
-        | _ -> None
-      end
+      (match String.find (fun x -> x = ' ') s with
+       | Some i when i > 0 ->
+         let hostname = String.with_range ~first:0 ~len:i s in
+         let hostnamelen = String.length hostname in
+         let data = String.with_range ~first:(i + 1) ~len:(l - i - 1) s in
+         let len = pred hostnamelen in
+         if String.get hostname len = ':' then
+           Some (String.with_range ~first:0 ~len hostname, data)
+         else
+           Some (hostname, data)
+       | _ -> None)
     | _ -> None
 
 (* FIXME Provide default Ptime.t? Version bellow doesn't work. Option type
