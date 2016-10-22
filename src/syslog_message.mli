@@ -70,7 +70,11 @@ sub-parser and use the hostname from {!type:ctx} instead.
 
 [set_hostname] is automatically set by the timestamp sub-parser when it fails, because at this
 point it is no longer possible to determine the hostname from the input string. *)
-type ctx = { timestamp : Ptime.t; hostname : string; set_hostname : bool; }
+type ctx = {
+  timestamp : Ptime.t;
+  hostname : string;
+  set_hostname : bool;
+}
 
 (** [ctx_hostname] sets a new hostname in {!type:ctx} *)
 val ctx_hostname : ctx -> string -> ctx
