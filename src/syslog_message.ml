@@ -193,21 +193,23 @@ let string_of_timestamp ts =
   let ((_, month, day), ((h, m, s), _)) = Ptime.to_date_time ts in
   Printf.sprintf "%s %.2i %.2i:%.2i:%.2i" (month_name_of_int month) day h m s
 
-type ctx =
-  {timestamp    : Ptime.t;
-   hostname     : string;
-   set_hostname : bool}
+type ctx = {
+  timestamp    : Ptime.t;
+  hostname     : string;
+  set_hostname : bool
+}
 
-let ctx_hostname ctx hostname = {ctx with hostname}
+let ctx_hostname ctx hostname = { ctx with hostname }
 
-let ctx_set_hostname ctx = {ctx with set_hostname=true}
+let ctx_set_hostname ctx = { ctx with set_hostname = true }
 
-type t =
-  {facility  : facility;
-   severity  : severity;
-   timestamp : Ptime.t;
-   hostname  : string;
-   message   : string}
+type t = {
+  facility  : facility;
+  severity  : severity;
+  timestamp : Ptime.t;
+  hostname  : string;
+  message   : string
+}
 
 let pp_string msg =
   let facility = string_of_facility msg.facility
