@@ -6,4 +6,3 @@ plugin(byte) = "syslog-message.cma"
 archive(native) = "syslog-message.cmxa"
 plugin(native) = "syslog-message.cmxs"
 exists_if = "syslog-message.cma"
-
