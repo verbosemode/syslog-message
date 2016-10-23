@@ -1,4 +1,5 @@
-# Syslog Message
+## Syslog Message
+%%VERSION%%
 
 This is a parser for [RFC 3164](https://tools.ietf.org/html/rfc3164) Syslog messages.
 
@@ -15,15 +16,8 @@ Some {Syslog_message.facility = Syslog_message.Local0; severity = Syslog_message
 
 ## Building
 
-```sh
-oasis setup
-make
-```
+This library can be installed with `opam`: `opam install syslog-message`
 
 ## Testing
 
-```sh
-oasis setup
-ocaml setup.ml -configure --enable-tests
-make tests
-```
+A test suite using qcheck is provided: `opam install --build-test syslog-message`

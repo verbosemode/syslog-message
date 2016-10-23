@@ -1,4 +1,13 @@
-(** Module for parsing RFC 3164 Syslog messages *)
+(** Syslog message parser and unparser
+
+    [Syslog-message] is a module for handling syslog messages, as defined in
+    {{:https://tools.ietf.org/html/rfc3164}RFC 3164}.
+
+    The {!parse} function transforms a string to a syslog message {!t}, using a
+    {{!ctx}context} of default parameters.  Such a message can be transformed
+    into a string {!to_string} or pretty printed {!pp_string}, {!pp}.
+
+    {e %%VERSION%% - {{:%%PKG_HOMEPAGE%% }homepage}} *)
 
 (** The type for Facilities *)
 type facility =

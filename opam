@@ -1,31 +1,26 @@
 opam-version: "1.2"
-name: "syslog-message"
-version: "0.0.1"
 maintainer: "Jochen Bartl <jochenbartl@mailbox.org>"
 authors: [ "Jochen Bartl <jochenbartl@mailbox.org>" ]
-license: "FreeBSD"
+license: "BSD2"
 homepage: "https://github.com/verbosemode/syslog-message"
 dev-repo: "https://github.com/verbosemode/syslog-message.git"
 bug-reports: "https://github.com/verbosemode/syslog-message/issues"
+doc: "http://verbosemo.de/syslog-message/"
+
 build: [
-  ["oasis" "setup"]
-  ["ocaml" "setup.ml" "-configure" "--prefix" prefix]
-  ["ocaml" "setup.ml" "-build"]
+  [ "ocaml" "pkg/pkg.ml" "build" "--pinned" "%{pinned}%" ]
 ]
-install: ["ocaml" "setup.ml" "-install"]
-remove: [
-  ["ocamlfind" "remove" "syslog-message"]
-]
+
 build-test: [
-  ["oasis" "setup"]
-  ["ocaml" "setup.ml" "-configure" "--enable-tests"]
-  ["ocaml" "setup.ml" "-build"]
-  ["ocaml" "setup.ml" "-test"]
+  [ "ocaml" "pkg/pkg.ml" "build" "--pinned" "%{pinned}%" "--tests" "true" ]
+  [ "ocaml" "pkg/pkg.ml" "test" ]
 ]
+
 depends: [
-  "astring"
-  "oasis" {build & >= "0.4"}
   "ocamlfind" {build}
+  "ocamlbuild" {build}
+  "topkg" {build}
+  "astring"
   "ptime"
   "qcheck" {test}
 ]
