@@ -1,42 +1,5 @@
 open Astring
 
-let bind o f =
-  match o with
-  | None -> None
-  | Some x -> f x
-
-let (>>=) o f = bind o f
-
-let int_of_month_name = function
-  | "Jan" -> Some 1
-  | "Feb" -> Some 2
-  | "Mar" -> Some 3
-  | "Apr" -> Some 4
-  | "May" -> Some 5
-  | "Jun" -> Some 6
-  | "Jul" -> Some 7
-  | "Aug" -> Some 8
-  | "Sep" -> Some 9
-  | "Oct" -> Some 10
-  | "Nov" -> Some 11
-  | "Dec" -> Some 12
-  | _ -> None
-
-let month_name_of_int = function
-  | 1  -> "Jan"
-  | 2  -> "Feb"
-  | 3  -> "Mar"
-  | 4  -> "Apr"
-  | 5  -> "May"
-  | 6  -> "Jun"
-  | 7  -> "Jul"
-  | 8  -> "Aug"
-  | 9  -> "Sep"
-  | 10 -> "Oct"
-  | 11 -> "Nov"
-  | 12 -> "Dec"
-  | _ -> failwith "Invalid month integer"
-
 type facility =
   | Kernel_Message
   | User_Level_Messages
@@ -189,19 +152,11 @@ let string_of_severity = function
   | Debug -> "debug"
   | Invalid_Severity -> "invalid"
 
-let string_of_timestamp ts =
-  let ((_, month, day), ((h, m, s), _)) = Ptime.to_date_time ts in
-  Printf.sprintf "%s %.2i %.2i:%.2i:%.2i" (month_name_of_int month) day h m s
-
 type ctx = {
   timestamp    : Ptime.t;
   hostname     : string;
   set_hostname : bool
 }
-
-let ctx_hostname ctx hostname = { ctx with hostname }
-
-let ctx_set_hostname ctx = { ctx with set_hostname = true }
 
 type t = {
   facility  : facility;
@@ -211,20 +166,78 @@ type t = {
   message   : string
 }
 
-let pp_string msg =
+module Rfc3164_Timestamp = struct
+  let int_of_month_name = function
+    | "Jan" -> Some 1
+    | "Feb" -> Some 2
+    | "Mar" -> Some 3
+    | "Apr" -> Some 4
+    | "May" -> Some 5
+    | "Jun" -> Some 6
+    | "Jul" -> Some 7
+    | "Aug" -> Some 8
+    | "Sep" -> Some 9
+    | "Oct" -> Some 10
+    | "Nov" -> Some 11
+    | "Dec" -> Some 12
+    | _ -> None
+
+  let month_name_of_int = function
+    | 1  -> "Jan"
+    | 2  -> "Feb"
+    | 3  -> "Mar"
+    | 4  -> "Apr"
+    | 5  -> "May"
+    | 6  -> "Jun"
+    | 7  -> "Jul"
+    | 8  -> "Aug"
+    | 9  -> "Sep"
+    | 10 -> "Oct"
+    | 11 -> "Nov"
+    | 12 -> "Dec"
+    | _ -> failwith "Invalid month integer"
+
+  let encode ts =
+    let ((_, month, day), ((h, m, s), _)) = Ptime.to_date_time ts in
+    Printf.sprintf "%s %.2i %.2i:%.2i:%.2i" (month_name_of_int month) day h m s
+
+  let decode s year =
+    let open String in
+    let tslen = 16 in
+    match length s with
+    | l when l < tslen -> None
+    | l ->
+      let month = int_of_month_name @@ with_range ~first:0 ~len:3 s in
+      let day = with_range ~first:4 ~len:2 s |> trim |> to_int in
+      let hour = with_range ~first:7 ~len:2 s |> to_int in
+      let minute = with_range ~first:10 ~len:2 s |> to_int in
+      let second = with_range ~first:13 ~len:2 s |> to_int in
+      match month, day, hour, minute, second with
+      | None, _, _, _, _ -> None
+      | _, None, _, _, _ -> None
+      | _, _, None, _, _ -> None
+      | _, _, _, None, _ -> None
+      | _, _, _, _, None -> None
+      | Some month, Some day, Some hour, Some min, Some sec ->
+        match Ptime.of_date_time ((year, month, day), ((hour, min, sec), 0)) with
+        | None -> None
+        | Some ts -> Some (ts, with_range ~first:tslen ~len:(l - tslen) s)
+end
+
+let to_string msg =
   let facility = string_of_facility msg.facility
   and severity = string_of_severity msg.severity
-  and timestamp = string_of_timestamp msg.timestamp
+  and timestamp = Rfc3164_Timestamp.encode msg.timestamp
   in
   Printf.sprintf
     "Facility: %s Severity: %s Timestamp: %s Hostname: %s Message: %s\n%!"
     facility severity timestamp msg.hostname msg.message
 
-let pp msg = print_string (pp_string msg)
+let pp ppf msg = Format.pp_print_string ppf (to_string msg)
 
-let to_string ?(len=1024) msg =
+let encode ?(len=1024) msg =
   let facse = int_of_facility msg.facility * 8 + int_of_severity msg.severity
-  and ts = string_of_timestamp msg.timestamp
+  and ts = Rfc3164_Timestamp.encode msg.timestamp
   in
   let msgstr = Printf.sprintf "<%d>%s %s %s" facse ts msg.hostname msg.message
   in
@@ -257,37 +270,7 @@ let parse_priority_value s =
           let data = String.with_range ~first ~len s in
           Some (facility, severity, data)
 
-let parse_timestamp_rfc3164 s year =
-  let open String in
-  let tslen = 16 in
-  match length s with
-  | l when l < tslen -> None
-  | l ->
-    let month = int_of_month_name @@ with_range ~first:0 ~len:3 s in
-    let day = with_range ~first:4 ~len:2 s |> trim |> to_int in
-    let hour = with_range ~first:7 ~len:2 s |> to_int in
-    let minute = with_range ~first:10 ~len:2 s |> to_int in
-    let second = with_range ~first:13 ~len:2 s |> to_int in
-    match month, day, hour, minute, second with
-    | None, _, _, _, _ -> None
-    | _, None, _, _, _ -> None
-    | _, _, None, _, _ -> None
-    | _, _, _, None, _ -> None
-    | _, _, _, _, None -> None
-    | Some month, Some day, Some hour, Some min, Some sec ->
-      match Ptime.of_date_time ((year, month, day), ((hour, min, sec), 0)) with
-      | None -> None
-      | Some ts -> Some (ts, with_range ~first:tslen ~len:(l - tslen) s)
-
-let parse_timestamp s (ctx : ctx) =
-  let ((year, _, _), _) = Ptime.to_date_time ctx.timestamp in
-  match parse_timestamp_rfc3164 s year with
-  | Some (timestamp, data) -> Some (timestamp, data, ctx)
-  | None ->
-    let ctx = ctx_set_hostname ctx in
-    Some (ctx.timestamp, s, ctx)
-
-let parse_hostname s ctx =
+let parse_hostname s (ctx : ctx) =
   if ctx.set_hostname then
     Some (ctx.hostname, s)
   else
@@ -306,10 +289,25 @@ let parse_hostname s ctx =
        | _ -> None)
     | _ -> None
 
+let parse_timestamp s (ctx : ctx) =
+  let ((year, _, _), _) = Ptime.to_date_time ctx.timestamp in
+  match Rfc3164_Timestamp.decode s year with
+  | Some (timestamp, data) -> Some (timestamp, data, ctx)
+  | None ->
+    let ctx = { ctx with set_hostname = true } in
+    Some (ctx.timestamp, s, ctx)
+
+let bind o f =
+  match o with
+  | None -> None
+  | Some x -> f x
+
+let (>>=) o f = bind o f
+
 (* FIXME Provide default Ptime.t? Version bellow doesn't work. Option type
 let parse ?(ctx={timestamp=(Ptime.of_date_time ((1970, 1, 1), ((0, 0,0), 0))); hostname="-"; set_hostname=false}) data =
 *)
-let parse ~ctx data =
+let decode ~ctx data =
   match String.length data with
   | l when l > 0 && l < 1025 ->
     parse_priority_value data >>= fun (facility, severity, data) ->
