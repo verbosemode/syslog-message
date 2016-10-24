@@ -37,13 +37,7 @@ type facility =
   | Local7
   | Invalid_Facility
 
-(** Convert a {!type:facility} into an integer *)
-val int_of_facility : facility -> int
-
-(** Converts an integer into a {!type:facility} *)
-val facility_of_int : int -> facility
-
-(** Converts a {!type:facility} into a string *)
+(** [string_of_facility f] is [data], the string representation of [f]. *)
 val string_of_facility : facility -> string
 
 (** The type for Severity levels *)
@@ -58,17 +52,8 @@ type severity =
   | Debug
   | Invalid_Severity
 
-(** Converts a {!type:severity} into an integer *)
-val int_of_severity : severity -> int
-
-(** Converts an integer into a {!type:severity} *)
-val severity_of_int : int -> severity
-
-(** Converts a {!type:severity} into a string *)
+(** [string_of_severity s] is [data], the string representation of [s]. *)
 val string_of_severity : severity -> string
-
-(** [string_of_timestamp] Converts a {!type:timestamp} into a string *)
-val string_of_timestamp : Ptime.t -> string
 
 (** [ctx] provides additional information to the {!val:parse} function in case one of the
 sub-parsers fails.
@@ -85,12 +70,6 @@ type ctx = {
   set_hostname : bool;
 }
 
-(** [ctx_hostname] sets a new hostname in {!type:ctx} *)
-val ctx_hostname : ctx -> string -> ctx
-
-(** [ctx_set_hostname] *)
-val ctx_set_hostname : ctx -> ctx
-
 (** The type for Syslog messages *)
 type t = {
   facility : facility;
@@ -100,16 +79,28 @@ type t = {
   message : string;
 }
 
-(** [pp_string] returns a pretty-printed string of {!type:t} *)
-val pp_string : t -> string
+(** [pp ppf t] prints the syslog message [t] on [ppf]. *)
+val pp : Format.formatter -> t -> unit
 
-(** [pp] pretty-prints a {!type:t} using print_string *)
-val pp : t -> unit
+(** [to_string t] is [str], a pretty printed string of syslog message [t]. *)
+val to_string : t -> string
 
-(** [parse]s a string containing a Syslog message and returns an option {!type:t} *)
-val parse : ctx:ctx -> string -> t option
+(** [decode ~ctx data] is [t option], either [Some t], a successfully decoded
+    syslog message, or [None]. *)
+val decode : ctx:ctx -> string -> t option
 
-(** [to_string] returns a Syslog message of type {!type:t} as string.
-The output string is truncated to 1024 bytes, which is the default of [len].
-Setting [len] to 0, leaves the output string unmodified. *)
-val to_string : ?len:int -> t -> string
+(** [encode ~len t] is [data], the encoded syslog message [t], truncated to
+    [len] bytes (defaults to 1024).  If [len] is 0 the output is not
+    truncated. *)
+val encode : ?len:int -> t -> string
+
+(** RFC 3164 Timestamps *)
+module Rfc3164_Timestamp : sig
+
+  (** [encode t] is [data], a timestamp in the presentation of RFC 3164.  *)
+  val encode : Ptime.t -> string
+
+  (** [decode data year] is [timestamp, leftover], the decoded RFC 3164
+      timestamp and superfluous bytes, or None on parse failure.  *)
+  val decode : string -> int -> (Ptime.t * string) option
+end
