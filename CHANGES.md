@@ -1,4 +1,4 @@
-## 0.0.2 (now)
+## 0.0.2 (2016-10-29)
 
 * simplify API: no set_hostname, hostname anymore #11
 * introduce Rfc3164_timestamp module #11
