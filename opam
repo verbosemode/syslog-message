@@ -5,7 +5,7 @@ license: "BSD2"
 homepage: "https://github.com/verbosemode/syslog-message"
 dev-repo: "https://github.com/verbosemode/syslog-message.git"
 bug-reports: "https://github.com/verbosemode/syslog-message/issues"
-doc: "http://verbosemo.de/syslog-message/"
+doc: "https://verbosemode.github.io/syslog-message/doc"
 
 build: [
   [ "ocaml" "pkg/pkg.ml" "build" "--pinned" "%{pinned}%" ]
