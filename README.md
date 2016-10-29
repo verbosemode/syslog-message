@@ -1,9 +1,14 @@
-## Syslog Message
+## syslog-message - Syslog message parser
+
 %%VERSION%%
 
-This is a parser for [RFC 3164](https://tools.ietf.org/html/rfc3164) Syslog messages.
+This is a library for parsing and generating RFC 3164 compatible Syslog messages.
 
-[![docs](https://img.shields.io/badge/doc-online-blue.svg)](https://verbosemode.github.io/syslog-message/doc/) [![Build Status](https://travis-ci.org/verbosemode/syslog-message.svg?branch=master)](https://travis-ci.org/verbosemode/syslog-message)
+## Documentation
+
+[![Build Status](https://travis-ci.org/verbosemode/syslog-message.svg?branch=master)](https://travis-ci.org/verbosemode/syslog-message)
+
+[API documentation](https://verbosemode.github.io/syslog-message/doc/) is available online.
 
 ```ocaml
 match Ptime.of_date_time ((1970, 1, 1), ((0, 0, 0), 0)) with
@@ -14,7 +19,7 @@ Some {Syslog_message.facility = Syslog_message.Local0; severity = Syslog_message
   hostname = "server001"; message = "foobar"}
 ```
 
-## Building
+## Installation
 
 This library can be installed with `opam`: `opam install syslog-message`
 
