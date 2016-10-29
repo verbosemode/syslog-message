@@ -1,0 +1,398 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<link rel="stylesheet" href="style.css" type="text/css">
+<meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+<link rel="Start" href="index.html">
+<link rel="Up" href="index.html">
+<link title="Index of types" rel=Appendix href="index_types.html">
+<link title="Index of values" rel=Appendix href="index_values.html">
+<link title="Index of modules" rel=Appendix href="index_modules.html">
+<link title="Syslog_message" rel="Chapter" href="Syslog_message.html"><title>Syslog_message</title>
+</head>
+<body>
+<div class="navbar">&nbsp;<a class="up" href="index.html" title="Index">Up</a>
+&nbsp;</div>
+<h1>Module <a href="type_Syslog_message.html">Syslog_message</a></h1>
+
+<pre><span class="keyword">module</span> Syslog_message: <code class="code"><span class="keyword">sig</span></code> <a href="Syslog_message.html">..</a> <code class="code"><span class="keyword">end</span></code></pre><div class="info module top">
+Syslog message parser and unparser
+<p>
+
+    <code class="code"><span class="constructor">Syslog</span>-message</code> is a module for handling syslog messages, as defined in
+    <a href="https://tools.ietf.org/html/rfc3164">RFC 3164</a>.
+<p>
+
+    The <code class="code">parse</code> function transforms a string to a syslog message <a href="Syslog_message.html#TYPEt"><code class="code"><span class="constructor">Syslog_message</span>.t</code></a>, using a
+    <a href="Syslog_message.html#TYPEctx">context</a> of default parameters.  Such a message can be transformed
+    into a string <a href="Syslog_message.html#VALto_string"><code class="code"><span class="constructor">Syslog_message</span>.to_string</code></a> or pretty printed <code class="code">pp_string</code>, <a href="Syslog_message.html#VALpp"><code class="code"><span class="constructor">Syslog_message</span>.pp</code></a>.
+<p>
+
+    <em>0.0.2 - <a href="https://github.com/verbosemode/syslog-message ">homepage</a></em><br>
+</div>
+<hr width="100%">
+
+<pre><code><span id="TYPEfacility"><span class="keyword">type</span> <code class="type"></code>facility</span> = </code></pre><table class="typetable">
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTfacility.Kernel_Message"><span class="constructor">Kernel_Message</span></span></code></td>
+
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTfacility.User_Level_Messages"><span class="constructor">User_Level_Messages</span></span></code></td>
+
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTfacility.Mail_System"><span class="constructor">Mail_System</span></span></code></td>
+
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTfacility.System_Daemons"><span class="constructor">System_Daemons</span></span></code></td>
+
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTfacility.Security_Authorization_Messages"><span class="constructor">Security_Authorization_Messages</span></span></code></td>
+
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTfacility.Messages_Generated_Internally_By_Syslogd"><span class="constructor">Messages_Generated_Internally_By_Syslogd</span></span></code></td>
+
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTfacility.Line_Printer_Subsystem"><span class="constructor">Line_Printer_Subsystem</span></span></code></td>
+
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTfacility.Network_News_Subsystem"><span class="constructor">Network_News_Subsystem</span></span></code></td>
+
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTfacility.UUCP_subsystem"><span class="constructor">UUCP_subsystem</span></span></code></td>
+
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTfacility.Clock_Daemon"><span class="constructor">Clock_Daemon</span></span></code></td>
+
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTfacility.Security_Authorization_Messages_10"><span class="constructor">Security_Authorization_Messages_10</span></span></code></td>
+
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTfacility.Ftp_Daemon"><span class="constructor">Ftp_Daemon</span></span></code></td>
+
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTfacility.Ntp_Subsystem"><span class="constructor">Ntp_Subsystem</span></span></code></td>
+
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTfacility.Log_Audit"><span class="constructor">Log_Audit</span></span></code></td>
+
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTfacility.Log_Alert"><span class="constructor">Log_Alert</span></span></code></td>
+
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTfacility.Clock_Daemon_15"><span class="constructor">Clock_Daemon_15</span></span></code></td>
+
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTfacility.Local0"><span class="constructor">Local0</span></span></code></td>
+
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTfacility.Local1"><span class="constructor">Local1</span></span></code></td>
+
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTfacility.Local2"><span class="constructor">Local2</span></span></code></td>
+
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTfacility.Local3"><span class="constructor">Local3</span></span></code></td>
+
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTfacility.Local4"><span class="constructor">Local4</span></span></code></td>
+
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTfacility.Local5"><span class="constructor">Local5</span></span></code></td>
+
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTfacility.Local6"><span class="constructor">Local6</span></span></code></td>
+
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTfacility.Local7"><span class="constructor">Local7</span></span></code></td>
+
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTfacility.Invalid_Facility"><span class="constructor">Invalid_Facility</span></span></code></td>
+
+</tr></table>
+
+<div class="info ">
+The type for Facilities<br>
+</div>
+
+
+<pre><span id="VALstring_of_facility"><span class="keyword">val</span> string_of_facility</span> : <code class="type"><a href="Syslog_message.html#TYPEfacility">facility</a> -> string</code></pre><div class="info ">
+<code class="code">string_of_facility f</code> is <code class="code">data</code>, the string representation of <code class="code">f</code>.<br>
+</div>
+
+<pre><code><span id="TYPEseverity"><span class="keyword">type</span> <code class="type"></code>severity</span> = </code></pre><table class="typetable">
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTseverity.Emergency"><span class="constructor">Emergency</span></span></code></td>
+
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTseverity.Alert"><span class="constructor">Alert</span></span></code></td>
+
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTseverity.Critical"><span class="constructor">Critical</span></span></code></td>
+
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTseverity.Error"><span class="constructor">Error</span></span></code></td>
+
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTseverity.Warning"><span class="constructor">Warning</span></span></code></td>
+
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTseverity.Notice"><span class="constructor">Notice</span></span></code></td>
+
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTseverity.Informational"><span class="constructor">Informational</span></span></code></td>
+
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTseverity.Debug"><span class="constructor">Debug</span></span></code></td>
+
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code><span class="keyword">|</span></code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTseverity.Invalid_Severity"><span class="constructor">Invalid_Severity</span></span></code></td>
+
+</tr></table>
+
+<div class="info ">
+The type for Severity levels<br>
+</div>
+
+
+<pre><span id="VALstring_of_severity"><span class="keyword">val</span> string_of_severity</span> : <code class="type"><a href="Syslog_message.html#TYPEseverity">severity</a> -> string</code></pre><div class="info ">
+<code class="code">string_of_severity s</code> is <code class="code">data</code>, the string representation of <code class="code">s</code>.<br>
+</div>
+
+<pre><code><span id="TYPEctx"><span class="keyword">type</span> <code class="type"></code>ctx</span> = {</code></pre><table class="typetable">
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTctx.timestamp">timestamp</span>&nbsp;: <code class="type">Ptime.t</code>;</code></td>
+
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTctx.hostname">hostname</span>&nbsp;: <code class="type">string</code>;</code></td>
+
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTctx.set_hostname">set_hostname</span>&nbsp;: <code class="type">bool</code>;</code></td>
+
+</tr></table>
+}
+
+<div class="info ">
+<code class="code">ctx</code> provides additional information to the <code class="code">parse</code> function in case one of the
+sub-parsers fails.<ul>
+<li><code class="code">timestamp</code>: A <code class="code">timestamp</code></li>
+<li><code class="code">hostname</code>: Hostname, IPv4 or IPv6 address of the sender. "<i>-</i>" if unknown.</li>
+<li><code class="code">set_hostname</code>: If true, the <code class="code">parse</code> function will skip its hostname
+sub-parser and use the hostname from <a href="Syslog_message.html#TYPEctx"><code class="code"><span class="constructor">Syslog_message</span>.ctx</code></a> instead.</li>
+</ul>
+
+<code class="code">set_hostname</code> is automatically set by the timestamp sub-parser when it fails, because at this
+point it is no longer possible to determine the hostname from the input string.<br>
+</div>
+
+
+<pre><code><span id="TYPEt"><span class="keyword">type</span> <code class="type"></code>t</span> = {</code></pre><table class="typetable">
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTt.facility">facility</span>&nbsp;: <code class="type"><a href="Syslog_message.html#TYPEfacility">facility</a></code>;</code></td>
+
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTt.severity">severity</span>&nbsp;: <code class="type"><a href="Syslog_message.html#TYPEseverity">severity</a></code>;</code></td>
+
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTt.timestamp">timestamp</span>&nbsp;: <code class="type">Ptime.t</code>;</code></td>
+
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTt.hostname">hostname</span>&nbsp;: <code class="type">string</code>;</code></td>
+
+</tr>
+<tr>
+<td align="left" valign="top" >
+<code>&nbsp;&nbsp;</code></td>
+<td align="left" valign="top" >
+<code><span id="TYPEELTt.message">message</span>&nbsp;: <code class="type">string</code>;</code></td>
+
+</tr></table>
+}
+
+<div class="info ">
+The type for Syslog messages<br>
+</div>
+
+
+<pre><span id="VALpp"><span class="keyword">val</span> pp</span> : <code class="type">Format.formatter -> <a href="Syslog_message.html#TYPEt">t</a> -> unit</code></pre><div class="info ">
+<code class="code">pp ppf t</code> prints the syslog message <code class="code">t</code> on <code class="code">ppf</code>.<br>
+</div>
+
+<pre><span id="VALto_string"><span class="keyword">val</span> to_string</span> : <code class="type"><a href="Syslog_message.html#TYPEt">t</a> -> string</code></pre><div class="info ">
+<code class="code">to_string t</code> is <code class="code">str</code>, a pretty printed string of syslog message <code class="code">t</code>.<br>
+</div>
+
+<pre><span id="VALdecode"><span class="keyword">val</span> decode</span> : <code class="type">ctx:<a href="Syslog_message.html#TYPEctx">ctx</a> -> string -> <a href="Syslog_message.html#TYPEt">t</a> option</code></pre><div class="info ">
+<code class="code">decode ~ctx data</code> is <code class="code">t option</code>, either <code class="code"><span class="constructor">Some</span> t</code>, a successfully decoded
+    syslog message, or <code class="code"><span class="constructor">None</span></code>.<br>
+</div>
+
+<pre><span id="VALencode"><span class="keyword">val</span> encode</span> : <code class="type">?len:int -> <a href="Syslog_message.html#TYPEt">t</a> -> string</code></pre><div class="info ">
+<code class="code">encode ~len t</code> is <code class="code">data</code>, the encoded syslog message <code class="code">t</code>, truncated to
+    <code class="code">len</code> bytes (defaults to 1024).  If <code class="code">len</code> is 0 the output is not
+    truncated.<br>
+</div>
+
+<pre><span class="keyword">module</span> <a href="Syslog_message.Rfc3164_Timestamp.html">Rfc3164_Timestamp</a>: <code class="code"><span class="keyword">sig</span></code> <a href="Syslog_message.Rfc3164_Timestamp.html">..</a> <code class="code"><span class="keyword">end</span></code></pre><div class="info">
+RFC 3164 Timestamps
+</div>
+</body></html>
