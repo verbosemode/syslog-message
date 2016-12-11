@@ -22,6 +22,6 @@ depends: [
   "topkg" {build}
   "astring"
   "ptime"
-  "qcheck" {test}
+  "qtest" {test}
 ]
 available: [ ocaml-version >= "4.02.3" ]
