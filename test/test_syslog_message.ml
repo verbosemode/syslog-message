@@ -32,6 +32,7 @@ end
 let priority = QCheck.int_bound 184
 let priority_g = QCheck.Gen.int_bound 184
 
+(* FIXME Generates invalid timestamps with February 29th *)
 let ptime_g =
   let open QCheck.Gen in
   int_bound (int_of_float @@ 2. ** 29.)
@@ -52,7 +53,7 @@ let valid_data_succeeds =
   ~name:"generating valid data gets a reasonable result"
   (triple priority ptime QCheck_legacy.string)
   @@ fun (pri, pt, host) ->
-    (pt <> None) ==>
+    assume (pt <> None && String.length host > 1);
     let ctx = { timestamp = Ptime.epoch; hostname = ""; set_hostname = false } in
     match pt with
     | None -> false
@@ -76,7 +77,7 @@ let invalid_timestamp =
   (make ~print:pp Gen.(quad priority_g ptime_g QCheck_legacy.string_g
     QCheck_legacy.string_g))
   @@ fun (pri, valid, invalid, host) ->
-    (valid <> None) ==>
+    assume (valid <> None);
     match valid with
     | None -> false
     | Some valid ->
