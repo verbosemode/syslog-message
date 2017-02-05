@@ -52,11 +52,11 @@ let valid_data_succeeds =
   ~name:"generating valid data gets a reasonable result"
   (triple priority ptime QCheck_legacy.string)
   @@ fun (pri, pt, host) ->
-    (pt <> None) ==>
-    let ctx = { timestamp = Ptime.epoch; hostname = ""; set_hostname = false } in
+    assume (pt <> None && String.length host > 1);
     match pt with
     | None -> false
     | Some pt ->
+      let ctx = { timestamp = pt; hostname = ""; set_hostname = false } in
       let msg =
         Printf.sprintf "<%d>%s %s: Whatever" pri (Rfc3164_Timestamp.encode pt) host
       in
@@ -76,7 +76,7 @@ let invalid_timestamp =
   (make ~print:pp Gen.(quad priority_g ptime_g QCheck_legacy.string_g
     QCheck_legacy.string_g))
   @@ fun (pri, valid, invalid, host) ->
-    (valid <> None) ==>
+    assume (valid <> None);
     match valid with
     | None -> false
     | Some valid ->
