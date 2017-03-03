@@ -102,5 +102,5 @@ module Rfc3164_Timestamp : sig
 
   (** [decode data year] is [timestamp, leftover], the decoded RFC 3164
       timestamp and superfluous bytes, or None on parse failure.  *)
-  val decode : string -> int -> (Ptime.t * string) option
+  (* val decode : string -> int -> (Ptime.t * string) option *)
 end

@@ -48,7 +48,7 @@ let ptime = QCheck.make ~print:pp_ptime ptime_g
 
 let valid_data_succeeds =
   let open QCheck in
-  Test.make ~count:100
+  Test.make ~count:1000
   ~name:"generating valid data gets a reasonable result"
   (triple priority ptime QCheck_legacy.string)
   @@ fun (pri, pt, host) ->
@@ -71,7 +71,7 @@ let valid_data_succeeds =
 let invalid_timestamp =
   let open QCheck in
   let pp = Print.(quad int pp_ptime string string) in
-  Test.make ~count:100
+  Test.make ~count:1000
   ~name:"parser substitutes the timestamp when it can't be parsed"
   (make ~print:pp Gen.(quad priority_g ptime_g QCheck_legacy.string_g
     QCheck_legacy.string_g))
@@ -89,7 +89,7 @@ let invalid_timestamp =
       | Some parsed -> parsed.timestamp = valid
 
 let invalid_data_fails =
-  QCheck.Test.make ~count:100
+  QCheck.Test.make ~count:1000
   ~name:"putting in invalid data always fails"
   QCheck.string
   @@ fun msg ->

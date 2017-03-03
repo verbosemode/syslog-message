@@ -200,28 +200,6 @@ module Rfc3164_Timestamp = struct
   let encode ts =
     let ((_, month, day), ((h, m, s), _)) = Ptime.to_date_time ts in
     Printf.sprintf "%s %.2i %.2i:%.2i:%.2i" (month_name_of_int month) day h m s
-
-  let decode s year =
-    let open String in
-    let tslen = 16 in
-    match length s with
-    | l when l < tslen -> None
-    | l ->
-      let month = int_of_month_name @@ with_range ~first:0 ~len:3 s in
-      let day = with_range ~first:4 ~len:2 s |> trim |> to_int in
-      let hour = with_range ~first:7 ~len:2 s |> to_int in
-      let minute = with_range ~first:10 ~len:2 s |> to_int in
-      let second = with_range ~first:13 ~len:2 s |> to_int in
-      match month, day, hour, minute, second with
-      | None, _, _, _, _ -> None
-      | _, None, _, _, _ -> None
-      | _, _, None, _, _ -> None
-      | _, _, _, None, _ -> None
-      | _, _, _, _, None -> None
-      | Some month, Some day, Some hour, Some min, Some sec ->
-        match Ptime.of_date_time ((year, month, day), ((hour, min, sec), 0)) with
-        | None -> None
-        | Some ts -> Some (ts, with_range ~first:tslen ~len:(l - tslen) s)
 end
 
 let to_string msg =
@@ -246,72 +224,126 @@ let encode ?(len=1024) msg =
   else
     msgstr
 
-let parse_priority_value s =
-  let l = String.length s in
-  if String.get s 0 <> '<' then
-    None
-  else
-    match String.find (fun x -> x = '>') s with
-    | None -> None
-    | Some pri_end when pri_end > 4 || l <= pri_end + 1 -> None
-    | Some pri_end ->
-      match String.with_range ~first:1 ~len:(pri_end - 1) s |> String.to_int with
-      | None -> None
-      | Some priority_value ->
-        let facility = facility_of_int @@ priority_value / 8
-        and severity = severity_of_int @@ priority_value mod 8
-        in
-        match facility, severity with
-        | Invalid_Facility, _ -> None
-        | _, Invalid_Severity -> None
-        | facility, severity ->
-          let first = succ pri_end in
-          let len = l - first in
-          let data = String.with_range ~first ~len s in
-          Some (facility, severity, data)
+let priority_value_of_int pri =
+    let facility = facility_of_int @@ pri / 8
+    and severity = severity_of_int @@ pri mod 8
+    in
+    match facility, severity with
+    | Invalid_Facility, _ -> None
+    | _, Invalid_Severity -> None
+    | facility, severity ->
+      Some (facility, severity)
 
-let parse_hostname s (ctx : ctx) =
-  if ctx.set_hostname then
-    Some (ctx.hostname, s)
-  else
-    match String.length s with
-    | l when l > 1 ->
-      (match String.find (fun x -> x = ' ') s with
-       | Some i when i > 0 ->
-         let hostname = String.with_range ~first:0 ~len:i s in
-         let hostnamelen = String.length hostname in
-         let data = String.with_range ~first:(i + 1) ~len:(l - i - 1) s in
-         let len = pred hostnamelen in
-         if String.get hostname len = ':' then
-           Some (String.with_range ~first:0 ~len hostname, data)
-         else
-           Some (hostname, data)
-       | _ -> None)
-    | _ -> None
+let build_timestamp ~(ctx : ctx) (mon, day, (h, m, s)) =
+  let ((year, _, _), _) = Ptime.to_date_time ctx.timestamp in             
+  match Rfc3164_Timestamp.int_of_month_name mon with
+  | None -> None                          
+  | Some mon ->                                        
+    Ptime.of_date_time ((year, mon, day), ((h, m, s), 0))
 
-let parse_timestamp s (ctx : ctx) =
-  let ((year, _, _), _) = Ptime.to_date_time ctx.timestamp in
-  match Rfc3164_Timestamp.decode s year with
-  | Some (timestamp, data) -> Some (timestamp, data, ctx)
-  | None ->
-    let ctx = { ctx with set_hostname = true } in
-    Some (ctx.timestamp, s, ctx)
+module Syslog_parser = struct
+  open Angstrom
 
-let bind o f =
-  match o with
-  | None -> None
-  | Some x -> f x
+  module P = struct
+    let is_digit = function '0' .. '9' -> true | _ -> false
 
-let (>>=) o f = bind o f
+    let is_space = function ' ' -> true | _ -> false
 
-(* FIXME Provide default Ptime.t? Version bellow doesn't work. Option type
-let parse ?(ctx={timestamp=(Ptime.of_date_time ((1970, 1, 1), ((0, 0,0), 0))); hostname="-"; set_hostname=false}) data =
-*)
+    let is_hostname_token = function
+      | 'a' .. 'z' | 'A' .. 'Z' | '0' .. '9' -> true
+      | _ -> false
+  end
+
+  let digits = take_while1 P.is_digit
+
+  let pri =
+    string "<" *> lift
+    (fun i -> int_of_string i |> priority_value_of_int)
+    (take_while1 P.is_digit) <* string ">"
+    <?> "priority"
+
+  let month =
+    string "Jan" <|>
+    string "Feb" <|>
+    string "Mar" <|>
+    string "Apr" <|>
+    string "May" <|>
+    string "Jun" <|>
+    string "Jul" <|>
+    string "Aug" <|>
+    string "Sep" <|>
+    string "Oct" <|>
+    string "Nov" <|>
+    string "Dec" <* char ' ' <?> "month"
+
+  let day =
+    (skip_while P.is_space) *> lift int_of_string (take_while1 P.is_digit)
+    <* char ' '
+    <?> "day"
+
+  let time =
+    lift3 (fun hour min sec ->
+      (int_of_string hour, int_of_string min, int_of_string sec))
+      (digits <* char ':')
+      (digits <* char ':')
+      (digits <* char ' ')
+      <?> "time"
+
+  let timestamp =
+    lift3 (fun month day time ->
+      (month, day, time))
+      month day time
+
+  let hostname =
+      (take_while1 P.is_hostname_token <* (char ' ' <|> (char ':' <* char ' ')))
+      <?> "hostname"
+
+  let create_timestamp_hostname_parser ctx =
+    fun () ->
+    lift4 (fun month day time hostname ->
+      (build_timestamp ~ctx (month, day, time)), hostname)
+      month day time hostname
+
+  let message =
+    take_while (fun _ -> true)
+
+  let p_full (ctx : ctx) =
+    fun () ->
+    lift4 (fun pri timestamp hostname message ->
+      (pri, (build_timestamp ~ctx timestamp), hostname, message))
+      pri
+      timestamp
+      hostname
+      message
+
+  let p_failed_timestamp (ctx : ctx) =
+    fun () ->
+    lift2
+      (fun pri message -> (pri, Some ctx.timestamp, ctx.hostname, message))
+      pri
+      message
+
+  let p_failed_pri (ctx : ctx) =
+    fun () ->
+    lift
+      (fun message -> (priority_value_of_int 13, Some ctx.timestamp, ctx.hostname, message))
+      message
+
+  let p (ctx : ctx) =
+    p_full ctx () <|> p_failed_timestamp ctx ()
+    (* Fix tests before enabling the p_faild_pri parser *)
+    (* p_full ctx () <|> p_failed_timestamp ctx () <|> p_failed_pri ctx () *)
+end
+
 let decode ~ctx data =
   match String.length data with
   | l when l > 0 && l < 1025 ->
-    parse_priority_value data >>= fun (facility, severity, data) ->
-    parse_timestamp data ctx >>= fun (timestamp, data, ctx) ->
-    parse_hostname data ctx >>= fun (hostname, data) ->
-    Some {facility; severity; timestamp; hostname; message=data}
+    (match Angstrom.parse_only (Syslog_parser.p ctx) (`String data) with
+    | Result.Ok (pri, timestamp, hostname, message) ->
+        (match pri, timestamp with
+        | None, _ -> None
+        | _, None -> None
+        | Some (facility, severity), Some timestamp ->
+          Some {facility; severity; timestamp; hostname; message})
+    | Result.Error _ -> None)
   | _ -> None

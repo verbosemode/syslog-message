@@ -1,6 +1,6 @@
 true: bin_annot, principal, safe_string
 true: warn(+A-4-6-41-42-44-48-58)
-true: package(astring ptime)
+true: package(angstrom astring ptime)
 
 "src": include
 

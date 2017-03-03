@@ -20,6 +20,7 @@ depends: [
   "ocamlfind" {build}
   "ocamlbuild" {build}
   "topkg" {build}
+  "angstrom"
   "astring"
   "ptime"
   "qcheck" {test}

@@ -1,3 +1,3 @@
-#require "astring,ptime";;
+#require "angstrom,astring,ptime";;
 #directory "_build/src";;
 #load_rec "syslog_message.cmo";;
