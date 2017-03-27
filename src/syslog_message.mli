@@ -104,3 +104,60 @@ module Rfc3164_Timestamp : sig
       timestamp and superfluous bytes, or None on parse failure.  *)
   (* val decode : string -> int -> (Ptime.t * string) option *)
 end
+
+(** RFC 5424 Syslog implementation *)
+module Rfc_5424 : sig
+  type text_encoding = [ `Ascii of string | `Utf8 of string ]
+
+  module Sd_id : sig
+    type t = Ietf of string | User_defined of string * string
+    val create_ietf : string -> t
+    val create : string -> string -> t
+    val to_string : t -> string
+    val compare : t -> t -> int
+  end
+
+  module Sd_param : sig
+    type t = string * string
+    val create : string -> [< `Utf8 of string] -> t
+    val to_string : t -> string
+  end
+
+  module Sd_element : sig
+    type t
+    val create : Sd_id.t -> t
+    val add : Sd_param.t -> t -> t
+    val to_string : t -> string
+    val compare : t -> t -> int
+  end
+
+  module Structured_data : sig
+    include Set.S with type t = Set.Make(Sd_element).t and
+      type elt = Sd_element.t
+
+    val to_string : t -> string
+  end
+
+  type t = {
+    facility        : facility;
+    severity        : severity;
+    version         : int;
+    timestamp       : Ptime.t option;
+    hostname        : string option;
+    app_name        : string option;
+    procid          : string option;
+    msgid           : string option;
+    structured_data : Structured_data.t option;
+    msg             : text_encoding;
+  }
+
+  val encode : t -> string
+
+  val create : ?facility:facility -> ?severity:severity ->
+    ?timestamp:Ptime.t option ->
+    ?hostname:string option ->
+    ?app_name:string option ->
+    ?procid:string option ->
+    ?msgid:string option ->
+    ?structured_data:Structured_data.t option -> text_encoding -> string
+end

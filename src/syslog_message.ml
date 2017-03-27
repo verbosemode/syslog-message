@@ -213,8 +213,12 @@ let to_string msg =
 
 let pp ppf msg = Format.pp_print_string ppf (to_string msg)
 
+(* FIXME rename parameters *)
+let facse_to_int f s =
+  int_of_facility f * 8 + int_of_severity s
+
 let encode ?(len=1024) msg =
-  let facse = int_of_facility msg.facility * 8 + int_of_severity msg.severity
+  let facse = facse_to_int msg.facility msg.severity
   and ts = Rfc3164_Timestamp.encode msg.timestamp
   in
   let msgstr = Printf.sprintf "<%d>%s %s %s" facse ts msg.hostname msg.message
@@ -235,10 +239,10 @@ let priority_value_of_int pri =
       Some (facility, severity)
 
 let build_timestamp ~(ctx : ctx) (mon, day, (h, m, s)) =
-  let ((year, _, _), _) = Ptime.to_date_time ctx.timestamp in             
+  let ((year, _, _), _) = Ptime.to_date_time ctx.timestamp in
   match Rfc3164_Timestamp.int_of_month_name mon with
-  | None -> None                          
-  | Some mon ->                                        
+  | None -> None
+  | Some mon ->
     Ptime.of_date_time ((year, mon, day), ((h, m, s), 0))
 
 module Syslog_parser = struct
@@ -298,12 +302,6 @@ module Syslog_parser = struct
       (take_while1 P.is_hostname_token <* (char ' ' <|> (char ':' <* char ' ')))
       <?> "hostname"
 
-  let create_timestamp_hostname_parser ctx =
-    fun () ->
-    lift4 (fun month day time hostname ->
-      (build_timestamp ~ctx (month, day, time)), hostname)
-      month day time hostname
-
   let message =
     take_while (fun _ -> true)
 
@@ -347,3 +345,154 @@ let decode ~ctx data =
           Some {facility; severity; timestamp; hostname; message})
     | Result.Error _ -> None)
   | _ -> None
+
+(*
+ * TODO Use utf8 (shortest-form?) in msg
+ * TODO Use utf8 (shortest-form?) in Sd_param / PARAM-VALUE
+ * Pretty-printers with utf8 support for msg and Sd_param/PARAM-VALUE
+ * Raise exception when invalid characters are used?
+ * Restrict fields to $field_length -> Read RFC for guidance
+ * Documment suggested naming schema for SD-ID in MLI: lowerCamelCase
+     name@privateEnterPriseNumber. 32473 -> Reserved for documentation
+      - SMI Network Management Private Enterprise Code
+      - For MirageOS stuff
+      49836
+        MirageOS
+          Camelus Dromedarius
+        - Sub-identifiers. 49836.23.42
+      powerSupply@49836
+   Verify number format??? Maybe just document it in MLI [0-9]+(\.[0-9]+)*
+ * ...
+ * Make API for creating messages more userfriendly. Sd_* feels clunky
+ * Write the parser
+ *)
+
+(* Syslog version 1 aka RFC5424 *)
+module Rfc_5424 = struct
+  let nil = "-"
+
+  let opt_or_f ~f default = function
+    | None -> default
+    | Some x -> f x
+
+  let opt_or_nil = opt_or_f ~f:(fun x -> x) nil
+
+  type text_encoding = [`Ascii of string | `Utf8 of string]
+
+  (* Merge into Sd_element? *)
+  module Sd_id = struct
+    let invalid_chars = ['@'; '='; ']'; '"']
+    let invalid_ascii c =
+      let i = int_of_char c in
+      if i <= 32 || i = 127 then true
+      else false
+
+    type t =
+      | Ietf of string
+      | User_defined of string * string
+
+    let create_ietf name = Ietf name
+
+    let create name number = User_defined (name, number)
+
+    let to_string = function
+      | Ietf s -> s
+      | User_defined (name, number) -> Printf.sprintf "%s@%s" name number
+
+    let compare e1 e2 =
+      match e1, e2 with
+      | Ietf s, Ietf s' -> Pervasives.compare s s'
+      | User_defined (name, num), User_defined (name', num') ->
+          (match Pervasives.compare name name' with
+           | 0 -> Pervasives.compare num num'
+           | c -> c)
+      | User_defined _, Ietf _ | Ietf _, User_defined _ -> 1
+  end
+
+  module Sd_param = struct
+    (* PARAM-NAME / PARAM-VALUE *)
+    (* lowerCamelCase for NAME suggest *)
+    (* UTF8 shortest-form in value required! *)
+    (* Some characters must be escaped in VALUE -> RFC section 6.3.3 *)
+    type t = string * string
+
+    let create name value =
+      match value with
+      | `Utf8 s -> (name, s)
+
+    let to_string (n, v) = Printf.sprintf "%s=\"%s\"" n v
+  end
+
+  module Sd_element = struct
+    type t = Sd_id.t * Sd_param.t list
+
+    let create id = (id, [])
+
+    let add param (id, param') = (id, param :: param')
+
+    let to_string (id, param) =
+      Printf.sprintf "[%s %s]"
+        (Sd_id.to_string id)
+        (List.map Sd_param.to_string param |> String.concat ~sep:" ")
+
+    let compare (id, _) (id', _) = Sd_id.compare id id'
+  end
+
+  module Structured_data = struct
+    include Set.Make(Sd_element)
+
+    let to_string s =
+      fold (fun e a -> Sd_element.to_string e :: a) s [] |> String.concat
+  end
+
+  (* TODO timezone / second fractions, max 6 digits *)
+  let timestamp_to_string = Ptime.to_rfc3339 ~tz_offset_s:0
+
+  type t = {
+    facility        : facility;
+    severity        : severity;
+    version         : int; (* 0 - 99 ?, 1 *)
+    timestamp       : Ptime.t option;
+    hostname        : string option; (* 1-255 , Nil *)
+    app_name        : string option; (* 1-48 , Nil *)
+    procid          : string option; (* 1-128, Nil *)
+    msgid           : string option; (* 1-32, Nil *)
+    structured_data : Structured_data.t option; (* Nil *)
+    msg             : text_encoding;
+  }
+
+  let buffer_add_msg b = function
+    | `Utf8 s ->
+        Uutf.Buffer.add_utf_8 b Uutf.u_bom;
+        Buffer.add_string b s
+    | `Ascii s -> Buffer.add_string b s
+
+  let encode m =
+    let b = Buffer.create 1024 in
+    Buffer.add_char b '<';
+    Buffer.add_string b (string_of_int @@ facse_to_int m.facility m.severity);
+    Buffer.add_char b '>';
+    Buffer.add_string b (string_of_int m.version);
+    Buffer.add_string b " ";
+    Buffer.add_string b (opt_or_f ~f:timestamp_to_string nil m.timestamp);
+    Buffer.add_string b " ";
+    Buffer.add_string b (opt_or_nil m.hostname);
+    Buffer.add_string b " ";
+    Buffer.add_string b (opt_or_nil m.app_name);
+    Buffer.add_string b " ";
+    Buffer.add_string b (opt_or_nil m.procid);
+    Buffer.add_string b " ";
+    Buffer.add_string b (opt_or_nil m.msgid);
+    Buffer.add_string b " ";
+    Buffer.add_string b
+      (opt_or_f ~f:Structured_data.to_string nil m.structured_data);
+    Buffer.add_string b " ";
+    buffer_add_msg b m.msg;
+    Buffer.contents b
+
+  let create ?(facility=Local0) ?(severity=Informational) ?(timestamp=None)
+    ?(hostname=None) ?(app_name=None) ?(procid=None) ?(msgid=None)
+    ?(structured_data=None) msg =
+      encode {facility; severity; version=1; timestamp; hostname; app_name;
+      procid; msgid; structured_data; msg}
+end

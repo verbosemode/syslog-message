@@ -7,5 +7,6 @@ let () =
   Pkg.describe "syslog-message" @@ fun _ ->
   Ok [
     Pkg.mllib "src/syslog-message.mllib";
-    Pkg.test "test/test_syslog_message"
+    Pkg.test "test/test_syslog_message";
+    Pkg.test "test/tests"
   ]

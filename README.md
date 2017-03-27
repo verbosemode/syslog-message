@@ -4,6 +4,8 @@
 
 This is a library for parsing and generating RFC 3164 compatible Syslog messages.
 
+!! THIS IS A TEST/DEV BRANCH FOR IMPLEMENTING 5424 !! History might be rewritten :-)
+
 ## Documentation
 
 [![Build Status](https://travis-ci.org/verbosemode/syslog-message.svg?branch=master)](https://travis-ci.org/verbosemode/syslog-message)

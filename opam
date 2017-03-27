@@ -23,6 +23,8 @@ depends: [
   "angstrom"
   "astring"
   "ptime"
+  "uutf"
+  "alcotest" {test}
   "qcheck" {test}
 ]
 available: [ ocaml-version >= "4.02.3" ]

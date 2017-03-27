@@ -1,3 +1,2 @@
 REC .
-PKG qcheck
-PKG syslog-message
+PKG alcotest qcheck
