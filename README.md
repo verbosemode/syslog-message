@@ -4,6 +4,8 @@
 
 This is a library for parsing and generating RFC 3164 compatible Syslog messages.
 
+!! THIS IS JUST A TEST BRANCH FOR PLAYING WITH ANGSTROM !!
+
 ## Documentation
 
 [![Build Status](https://travis-ci.org/verbosemode/syslog-message.svg?branch=master)](https://travis-ci.org/verbosemode/syslog-message)
