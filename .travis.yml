@@ -6,3 +6,5 @@ env:
   - OCAML_VERSION=4.02 PACKAGE=syslog-message TESTS=true
   - OCAML_VERSION=4.03 PACKAGE=syslog-message TESTS=true
   - OCAML_VERSION=4.04 PACKAGE=syslog-message TESTS=true
+  - OCAML_VERSION=4.05 PACKAGE=syslog-message TESTS=true
+  - OCAML_VERSION=4.06 PACKAGE=syslog-message TESTS=true
