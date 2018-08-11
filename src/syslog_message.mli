@@ -94,6 +94,10 @@ val decode : ctx:ctx -> string -> t option
     truncated. *)
 val encode : ?len:int -> t -> string
 
+(** [encode_local ~len t] behaves as {!encode} except that the message is
+    formatted for sending to the local syslog daemon (e.g. on [/dev/log]). *)
+val encode_local : ?len:int -> t -> string
+
 (** RFC 3164 Timestamps *)
 module Rfc3164_Timestamp : sig
 
