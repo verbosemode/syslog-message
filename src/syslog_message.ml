@@ -235,16 +235,26 @@ let to_string msg =
 
 let pp ppf msg = Format.pp_print_string ppf (to_string msg)
 
-let encode ?(len=1024) msg =
+let encode_gen encode ?(len=1024) msg =
   let facse = int_of_facility msg.facility * 8 + int_of_severity msg.severity
   and ts = Rfc3164_Timestamp.encode msg.timestamp
   in
-  let msgstr = Printf.sprintf "<%d>%s %s %s" facse ts msg.hostname msg.message
+  let msgstr = encode facse ts msg.hostname msg.message
   in
   if len > 0 && String.length msgstr > len then
     String.with_range ~first:0 ~len:len msgstr
   else
     msgstr
+
+let encode ?len msg =
+  let encode facse ts hostname msg =
+    Printf.sprintf "<%d>%s %s %s" facse ts hostname msg
+  in
+  encode_gen encode ?len msg
+
+let encode_local ?len msg =
+  let encode facse ts _ msg = Printf.sprintf "<%d>%s %s" facse ts msg in
+  encode_gen encode ?len msg
 
 let parse_priority_value s =
   let l = String.length s in
