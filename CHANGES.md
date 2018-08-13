@@ -1,3 +1,6 @@
+* add encode_local for sending to local syslog (#17, by @dra27)
+* forgot to thank @hannesm, @Leonidas-from-XIV for past contributions
+
 ## 0.0.2 (2016-10-29)
 
 * simplify API: no set_hostname, hostname anymore #11
