@@ -1,5 +1,4 @@
 *.swp
 _build
 syslog-message.install
-src/.merlin
-test/.merlin
+.merlin
