@@ -1,7 +1,0 @@
-true: bin_annot, principal, safe_string
-true: warn(+A-4-6-41-42-44-48-58)
-true: package(astring ptime)
-
-"src": include
-
-<test/test_syslog_message.{ml,native,byte}>: package(qcheck)
