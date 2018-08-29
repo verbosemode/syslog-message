@@ -1,5 +1,4 @@
 *.swp
-*.native
-*.byte
-*.install
 _build
+syslog-message.install
+.merlin

@@ -60,7 +60,7 @@ let valid_data_succeeds =
       let msg =
         Printf.sprintf "<%d>%s %s: Whatever" pri (Rfc3164_Timestamp.encode pt) host
       in
-      match decode ctx msg with
+      match decode ~ctx msg with
       | None -> false
       | Some parsed ->
         let ((_, m, d), ((hh, mm, ss), _)) = Ptime.to_date_time parsed.timestamp in
@@ -84,7 +84,7 @@ let invalid_timestamp =
         Printf.sprintf "<%d>%s %s: Whatever" pri invalid host
       in
       let ctx = { timestamp = valid; hostname = ""; set_hostname = false } in
-      match decode ctx msg with
+      match decode ~ctx msg with
       | None -> false
       | Some parsed -> parsed.timestamp = valid
 
@@ -94,7 +94,7 @@ let invalid_data_fails =
   QCheck.string
   @@ fun msg ->
     let ctx = { timestamp = Ptime.epoch; hostname = ""; set_hostname = false } in
-    decode ctx msg = None
+    decode ~ctx msg = None
 
 let () =
   let suite = [invalid_data_fails; valid_data_succeeds; invalid_timestamp] in

@@ -1,0 +1,8 @@
+(executable
+  (name      test_syslog_message)
+  (libraries syslog-message qcheck))
+
+(alias
+  (name   runtest)
+  (deps   test_syslog_message.exe)
+  (action (run %{deps})))

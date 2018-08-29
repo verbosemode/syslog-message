@@ -1,8 +1,0 @@
-version = "%%VERSION_NUM%%"
-description = "Syslog Message Parser"
-requires = "astring ptime"
-archive(byte) = "syslog-message.cma"
-plugin(byte) = "syslog-message.cma"
-archive(native) = "syslog-message.cmxa"
-plugin(native) = "syslog-message.cmxs"
-exists_if = "syslog-message.cma"
