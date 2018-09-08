@@ -35,7 +35,6 @@ type facility =
   | Local5
   | Local6
   | Local7
-  | Invalid_Facility
 
 (** [string_of_facility f] is [data], the string representation of [f]. *)
 val string_of_facility : facility -> string
@@ -50,7 +49,6 @@ type severity =
   | Notice
   | Informational
   | Debug
-  | Invalid_Severity
 
 (** [string_of_severity s] is [data], the string representation of [s]. *)
 val string_of_severity : severity -> string
@@ -76,6 +74,7 @@ type t = {
   severity : severity;
   timestamp : Ptime.t;
   hostname : string;
+  tag : string;
   message : string;
 }
 
@@ -85,9 +84,9 @@ val pp : Format.formatter -> t -> unit
 (** [to_string t] is [str], a pretty printed string of syslog message [t]. *)
 val to_string : t -> string
 
-(** [decode ~ctx data] is [t option], either [Some t], a successfully decoded
-    syslog message, or [None]. *)
-val decode : ctx:ctx -> string -> t option
+(** [decode ~ctx data] is [t], either [Ok t], a successfully decoded
+    syslog message, or [Error e]. *)
+val decode : ctx:ctx -> string -> (t, [> Rresult.R.msg ]) result
 
 (** [encode ~len t] is [data], the encoded syslog message [t], truncated to
     [len] bytes (defaults to 1024).  If [len] is 0 the output is not
@@ -104,7 +103,7 @@ module Rfc3164_Timestamp : sig
   (** [encode t] is [data], a timestamp in the presentation of RFC 3164.  *)
   val encode : Ptime.t -> string
 
-  (** [decode data year] is [timestamp, leftover], the decoded RFC 3164
-      timestamp and superfluous bytes, or None on parse failure.  *)
-  val decode : string -> int -> (Ptime.t * string) option
+  (** [decode data year] is [Ok (timestamp, leftover)], the decoded RFC 3164
+      timestamp and superfluous bytes, or [Error e] on parse failure.  *)
+  val decode : string -> int -> (Ptime.t * string, [> Rresult.R.msg ]) result
 end
