@@ -256,29 +256,28 @@ let encode_local ?len msg =
 
 let parse_priority_value s :
   (facility * severity * string, [> `Msg of string ]) result =
-  let l = String.length s in
-  if String.get s 0 <> '<' then
-    Error (`Msg "couldn't parse priority: expected '<'")
-  else
-    match String.find ((=) '>') s with
-    | None -> Error (`Msg "couldn't parse priority: no '>' found")
-    | Some pri_end when pri_end > 4 || l <= pri_end + 1 ->
-      Error (`Msg "couldn't parse priority: expected '>' earlier")
-    | Some pri_end ->
-      match String.with_range ~first:1 ~len:(pri_end - 1) s |> String.to_int with
-      | None -> Error (`Msg "couldn't parse priority: conversion to int failed")
-      | Some priority_value ->
-        let facility = facility_of_int @@ priority_value / 8
-        and severity = severity_of_int @@ priority_value mod 8
-        in
-        match facility, severity with
-        | None, _ -> Error (`Msg "invalid facility")
-        | _, None -> Error (`Msg "invalid severity")
-        | Some facility, Some severity ->
-          let first = succ pri_end in
-          let len = l - first in
-          let data = String.with_range ~first ~len s in
-          Ok (facility, severity, data)
+  match String.cut ~sep:"<" s with
+  | None -> Error (`Msg "couldn't parse priority: expected '<'")
+  | Some (x, data) ->
+    if x <> "" then
+      Error (`Msg "couldn't parse priority: expected '<'")
+    else match String.cut ~sep:">" data with
+      | None -> Error (`Msg "couldn't parse priority: no '>' found")
+      | Some (pri, data) ->
+        if String.length pri > 3 then
+          Error (`Msg "couldn't parse priority: expected '>' earlier")
+        else
+          (* TODO RFC 3164 4.1.1 requires decimal, String.to_int accepts "0x1" *)
+          match String.to_int pri with
+          | None -> Error (`Msg "couldn't parse priority: not an integer")
+          | Some priority_value ->
+            let facility = facility_of_int @@ priority_value / 8
+            and severity = severity_of_int @@ priority_value mod 8
+            in
+            match facility, severity with
+            | None, _ -> Error (`Msg "invalid facility")
+            | _, None -> Error (`Msg "invalid severity")
+            | Some facility, Some severity -> Ok (facility, severity, data)
 
 let parse_hostname s (ctx : ctx) : (string * string, [> Rresult.R.msg ]) result =
   if ctx.set_hostname then
