@@ -233,16 +233,19 @@ let to_string msg =
 
 let pp ppf msg = Format.pp_print_string ppf (to_string msg)
 
-let encode_gen encode ?(len=1024) msg =
+let encode_gen encode ?len msg =
   let facse = int_of_facility msg.facility * 8 + int_of_severity msg.severity
   and ts = Rfc3164_Timestamp.encode msg.timestamp
   in
   let msgstr = encode facse ts msg.hostname msg.tag msg.content
   in
-  if len > 0 && String.length msgstr > len then
-    String.with_range ~first:0 ~len:len msgstr
-  else
-    msgstr
+  match len with
+  | None -> msgstr
+  | Some max_len ->
+    if String.length msgstr > max_len then
+      String.with_range ~first:0 ~len:max_len msgstr
+    else
+      msgstr
 
 let encode ?len msg =
   let encode facse ts hostname tag msg =
@@ -311,12 +314,8 @@ let parse_tag s : (string * string, [> Rresult.R.msg ]) result =
 let parse ?(ctx={timestamp=(Ptime.of_date_time ((1970, 1, 1), ((0, 0,0), 0))); hostname="-"; set_hostname=false}) data =
 *)
 let decode ~ctx data : (t, [> Rresult.R.msg ]) result =
-  let l = String.length data in
-  if l > 0 && l < 1025 then
-    parse_priority_value data >>= fun (facility, severity, data) ->
-    parse_timestamp data ctx >>= fun (timestamp, data, ctx) ->
-    parse_hostname data ctx >>= fun (hostname, data) ->
-    parse_tag data >>= fun (tag, content) ->
-    Ok { facility; severity; timestamp; hostname; tag; content }
-  else
-    Error (`Msg "could not decode data")
+  parse_priority_value data >>= fun (facility, severity, data) ->
+  parse_timestamp data ctx >>= fun (timestamp, data, ctx) ->
+  parse_hostname data ctx >>= fun (hostname, data) ->
+  parse_tag data >>= fun (tag, content) ->
+  Ok { facility; severity; timestamp; hostname; tag; content }
