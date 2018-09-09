@@ -160,7 +160,7 @@ type t = {
   timestamp : Ptime.t;
   hostname  : string;
   tag       : string;
-  message   : string
+  content   : string
 }
 
 module Rfc3164_Timestamp = struct
@@ -228,8 +228,8 @@ let to_string msg =
   and timestamp = Rfc3164_Timestamp.encode msg.timestamp
   in
   Printf.sprintf
-    "Facility: %s Severity: %s Timestamp: %s Hostname: %s Tag: %sMessage: %s\n%!"
-    facility severity timestamp msg.hostname msg.tag msg.message
+    "Facility: %s Severity: %s Timestamp: %s Hostname: %s Tag: %s Content: %s\n%!"
+    facility severity timestamp msg.hostname msg.tag msg.content
 
 let pp ppf msg = Format.pp_print_string ppf (to_string msg)
 
@@ -237,7 +237,7 @@ let encode_gen encode ?(len=1024) msg =
   let facse = int_of_facility msg.facility * 8 + int_of_severity msg.severity
   and ts = Rfc3164_Timestamp.encode msg.timestamp
   in
-  let msgstr = encode facse ts msg.hostname msg.tag msg.message
+  let msgstr = encode facse ts msg.hostname msg.tag msg.content
   in
   if len > 0 && String.length msgstr > len then
     String.with_range ~first:0 ~len:len msgstr
@@ -316,7 +316,7 @@ let decode ~ctx data : (t, [> Rresult.R.msg ]) result =
     parse_priority_value data >>= fun (facility, severity, data) ->
     parse_timestamp data ctx >>= fun (timestamp, data, ctx) ->
     parse_hostname data ctx >>= fun (hostname, data) ->
-    parse_tag data >>= fun (tag, message) ->
-    Ok { facility; severity; timestamp; hostname; tag; message }
+    parse_tag data >>= fun (tag, content) ->
+    Ok { facility; severity; timestamp; hostname; tag; content }
   else
     Error (`Msg "could not decode data")

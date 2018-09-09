@@ -75,7 +75,7 @@ type t = {
   timestamp : Ptime.t;
   hostname : string;
   tag : string;
-  message : string;
+  content : string;
 }
 
 (** [pp ppf t] prints the syslog message [t] on [ppf]. *)
