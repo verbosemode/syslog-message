@@ -247,14 +247,22 @@ let encode_gen encode ?len msg =
     else
       msgstr
 
+let separator s =
+  match String.head s with
+  | Some c when not (Char.Ascii.is_alphanum c) -> ""
+  | Some _ | None -> " "
+
 let encode ?len msg =
-  let encode facse ts hostname tag msg =
-    Printf.sprintf "<%d>%s %s %s%s" facse ts hostname tag msg
+  let encode facse ts hostname tag content =
+    Printf.sprintf "<%d>%s %s %s%s%s" facse ts hostname tag
+      (separator content) content
   in
   encode_gen encode ?len msg
 
 let encode_local ?len msg =
-  let encode facse ts _ tag msg = Printf.sprintf "<%d>%s %s%s" facse ts tag msg in
+  let encode facse ts _ tag content =
+    Printf.sprintf "<%d>%s %s%s%s" facse ts tag (separator content) content
+  in
   encode_gen encode ?len msg
 
 let parse_priority_value s :
