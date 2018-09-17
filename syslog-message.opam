@@ -8,6 +8,7 @@ bug-reports: "https://github.com/verbosemode/syslog-message/issues"
 doc: "https://verbosemode.github.io/syslog-message/doc"
 
 build: [
+  [ "dune" "subst" ] {pinned}
   [ "dune" "build" "-p" name "-j" jobs ]
 ]
 
@@ -19,6 +20,7 @@ depends: [
   "dune" {>= "1.1.0" & build}
   "astring"
   "ptime"
+  "rresult"
   "qcheck" {test}
 ]
-available: [ ocaml-version >= "4.02.3" ]
+available: [ ocaml-version >= "4.03.0" ]
