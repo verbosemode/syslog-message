@@ -1,3 +1,6 @@
+* split message part into tag and content (#20, by @hannesm)
+* use result types instead of option (#20, by @hannesm)
+* remove transport-dependent length check from encode (#20, by @hannesm)
 * switch build system to Dune (#19, by @dra27)
 * add encode_local for sending to local syslog (#17, by @dra27)
 * forgot to thank @hannesm, @Leonidas-from-XIV for past contributions
