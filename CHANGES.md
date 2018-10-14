@@ -1,3 +1,4 @@
+* Warning: encode function no longer truncates messages to 1024 bytes by default
 * split message part into tag and content (#20, by @hannesm)
 * use result types instead of option (#20, by @hannesm)
 * remove transport-dependent length check from encode (#20, by @hannesm)
