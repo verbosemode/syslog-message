@@ -91,7 +91,7 @@ val decode : ctx:ctx -> string -> (t, [> Rresult.R.msg ]) result
 (** [encode ~len t] is [data], the encoded syslog message [t], truncated to
     [len] bytes. If [len] is 0 the output is not truncated.
 
-    {e Warning:} Since version 0.0.3, messages are no longer truncated to 1024
+    {e Warning:} Since version 1.0.0, messages are no longer truncated to 1024
     bytes by default. *)
 val encode : ?len:int -> t -> string
 

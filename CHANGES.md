@@ -1,4 +1,4 @@
-## 0.0.3 (2018-10-14)
+## 1.0.0 (2018-10-14)
 
 * Warning: encode function no longer truncates messages to 1024 bytes by default
 * split message part into tag and content (#20, by @hannesm)
