@@ -1,3 +1,5 @@
+* additonal conversion and pretty printer functions (#23, by @vbmithr)
+
 ## 1.0.0 (2018-10-14)
 
 * Warning: encode function no longer truncates messages to 1024 bytes by default
