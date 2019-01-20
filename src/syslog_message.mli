@@ -36,8 +36,12 @@ type facility =
   | Local6
   | Local7
 
+val int_of_facility : facility -> int
+val facility_of_int : int -> facility option
+
 (** [string_of_facility f] is [data], the string representation of [f]. *)
 val string_of_facility : facility -> string
+val pp_print_facility : Format.formatter -> facility -> unit
 
 (** The type for Severity levels *)
 type severity =
@@ -50,8 +54,12 @@ type severity =
   | Informational
   | Debug
 
+val int_of_severity : severity -> int
+val severity_of_int : int -> severity option
+
 (** [string_of_severity s] is [data], the string representation of [s]. *)
 val string_of_severity : severity -> string
+val pp_print_severity : Format.formatter -> severity -> unit
 
 (** [ctx] provides additional information to the {!val:parse} function in case one of the
 sub-parsers fails.

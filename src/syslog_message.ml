@@ -107,6 +107,9 @@ let string_of_facility = function
   | Local6 -> "local6"
   | Local7 -> "local7"
 
+let pp_print_facility ppf f =
+  Format.fprintf ppf "%s" (string_of_facility f)
+
 type severity =
   | Emergency
   | Alert
@@ -147,6 +150,9 @@ let string_of_severity = function
   | Notice -> "notice"
   | Informational -> "info"
   | Debug -> "debug"
+
+let pp_print_severity ppf s =
+  Format.fprintf ppf "%s" (string_of_severity s)
 
 type ctx = {
   timestamp    : Ptime.t;
