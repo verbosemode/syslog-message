@@ -1,3 +1,5 @@
+## 1.1.0 (2019-04-14)
+
 * additonal conversion and pretty printer functions (#23, by @vbmithr)
 
 ## 1.0.0 (2018-10-14)
