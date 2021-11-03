@@ -1,6 +1,6 @@
 open Astring
 
-open Rresult.R.Infix
+let ( let* ) = Result.bind
 
 type facility =
   | Kernel_Message
@@ -204,7 +204,7 @@ module Rfc3164_Timestamp = struct
     let ((_, month, day), ((h, m, s), _)) = Ptime.to_date_time ts in
     Printf.sprintf "%s %.2i %.2i:%.2i:%.2i" (month_name_of_int month) day h m s
 
-  let decode s year : (Ptime.t * string, [> Rresult.R.msg ]) result =
+  let decode s year : (Ptime.t * string, [> `Msg of string ]) result =
     let open String in
     let tslen = 16 in
     match length s with
@@ -296,18 +296,20 @@ let parse_priority_value s :
             | _, None -> Error (`Msg "invalid severity")
             | Some facility, Some severity -> Ok (facility, severity, data)
 
-let parse_hostname s (ctx : ctx) : (string * string, [> Rresult.R.msg ]) result =
+let parse_hostname s (ctx : ctx) : (string * string, [> `Msg of string ]) result =
   if ctx.set_hostname then
     Ok (ctx.hostname, s)
   else
     match String.cut ~sep:" " s with
     | None | Some ("", _) -> Error (`Msg "invalid or empty hostname")
     | Some (host, data) ->
-      (match String.cut ~sep:":" ~rev:true host with
-       | None -> Ok host
-       | Some (host', "") -> Ok host'
-       | Some _ -> Error (`Msg "invalid empty hostname")) >>| fun hostname ->
-      (hostname, data)
+      let* hostname =
+        match String.cut ~sep:":" ~rev:true host with
+        | None -> Ok host
+        | Some (host', "") -> Ok host'
+        | Some _ -> Error (`Msg "invalid empty hostname")
+      in
+      Ok (hostname, data)
 
 let parse_timestamp s (ctx : ctx) =
   let ((year, _, _), _) = Ptime.to_date_time ctx.timestamp in
@@ -317,7 +319,7 @@ let parse_timestamp s (ctx : ctx) =
     let ctx = { ctx with set_hostname = true } in
     Ok (ctx.timestamp, s, ctx)
 
-let parse_tag s : (string * string, [> Rresult.R.msg ]) result =
+let parse_tag s : (string * string, [> `Msg of string ]) result =
   let tag, msg = String.span ~sat:Char.Ascii.is_alphanum s in
   if String.length tag > 32 then
     Error (`Msg "tag exceeds 32 characters")
@@ -327,9 +329,9 @@ let parse_tag s : (string * string, [> Rresult.R.msg ]) result =
 (* FIXME Provide default Ptime.t? Version bellow doesn't work. Option type
 let parse ?(ctx={timestamp=(Ptime.of_date_time ((1970, 1, 1), ((0, 0,0), 0))); hostname="-"; set_hostname=false}) data =
 *)
-let decode ~ctx data : (t, [> Rresult.R.msg ]) result =
-  parse_priority_value data >>= fun (facility, severity, data) ->
-  parse_timestamp data ctx >>= fun (timestamp, data, ctx) ->
-  parse_hostname data ctx >>= fun (hostname, data) ->
-  parse_tag data >>= fun (tag, content) ->
+let decode ~ctx data : (t, [> `Msg of string ]) result =
+  let* facility, severity, data = parse_priority_value data in
+  let* timestamp, data, ctx = parse_timestamp data ctx in
+  let* hostname, data = parse_hostname data ctx in
+  let* tag, content = parse_tag data in
   Ok { facility; severity; timestamp; hostname; tag; content }

@@ -8,19 +8,19 @@ bug-reports: "https://github.com/verbosemode/syslog-message/issues"
 license: "BSD2"
 
 depends: [
-  "ocaml" {>= "4.03.0"}
-  "dune" {>= "1.1.0" & build}
+  "ocaml" {>= "4.08.0"}
+  "dune" {>= "1.1.0"}
   "astring"
   "ptime"
-  "rresult"
   "qcheck" {with-test}
 ]
 
 build: [
-  [ "dune" "subst" ] {pinned}
+  [ "dune" "subst" ] {dev}
   [ "dune" "build" "-p" name "-j" jobs ]
   [ "dune" "runtest" "-p" name "-j" jobs ] {with-test}
 ]
+conflicts: [ "result" {< "1.5"} ]
 
 synopsis: "Syslog message parser"
 description: """
