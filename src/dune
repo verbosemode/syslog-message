@@ -1,8 +1,5 @@
-(env
-  (_ (flags -w +A-4-6-41-42-44-48-58 -principal -safe-string)))
-
 (library
   (name        syslog_message)
   (public_name syslog-message)
   (synopsis    "Syslog Message Parser")
-  (libraries   astring ptime rresult))
+  (libraries   astring ptime))

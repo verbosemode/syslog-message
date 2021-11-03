@@ -94,7 +94,7 @@ val to_string : t -> string
 
 (** [decode ~ctx data] is [t], either [Ok t], a successfully decoded
     syslog message, or [Error e]. *)
-val decode : ctx:ctx -> string -> (t, [> Rresult.R.msg ]) result
+val decode : ctx:ctx -> string -> (t, [> `Msg of string ]) result
 
 (** [encode ~len t] is [data], the encoded syslog message [t], truncated to
     [len] bytes. If [len] is 0 the output is not truncated.
@@ -115,5 +115,5 @@ module Rfc3164_Timestamp : sig
 
   (** [decode data year] is [Ok (timestamp, leftover)], the decoded RFC 3164
       timestamp and superfluous bytes, or [Error e] on parse failure.  *)
-  val decode : string -> int -> (Ptime.t * string, [> Rresult.R.msg ]) result
+  val decode : string -> int -> (Ptime.t * string, [> `Msg of string ]) result
 end
