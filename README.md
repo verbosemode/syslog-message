@@ -6,7 +6,7 @@ This is a library for parsing and generating RFC 3164 compatible Syslog messages
 
 ## Documentation
 
-[![Build Status](https://travis-ci.org/verbosemode/syslog-message.svg?branch=master)](https://travis-ci.org/verbosemode/syslog-message)
+[![Build Status](https://img.shields.io/endpoint?url=https%3A%2F%2Fci.ocamllabs.io%2Fbadge%2Fverbosemode%2Fsyslog-message%2Fmaster&logo=ocaml)](https://ci.ocamllabs.io/github/verbosemode/syslog-message)
 
 [API documentation](https://verbosemode.github.io/syslog-message/doc/) is available online.
 
