@@ -9,7 +9,7 @@ license: "BSD-2-Clause"
 
 depends: [
   "ocaml" {>= "4.08.0"}
-  "dune" {>= "1.1.0"}
+  "dune" {>= "2.0.0"}
   "astring"
   "ptime"
   "qcheck" {with-test}
