@@ -1,4 +1,0 @@
-S .
-B _build
-PKG astring
-PKG ptime

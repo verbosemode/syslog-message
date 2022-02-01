@@ -1,4 +1,9 @@
-*.swp
-_build
-syslog-message.install
+# Dune generated files
+_build/
+*.install
+
+# Merlin configuring file for Vim and Emacs
 .merlin
+
+# Local OPAM switch
+_opam/

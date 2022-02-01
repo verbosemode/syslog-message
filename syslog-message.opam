@@ -5,11 +5,11 @@ homepage: "https://github.com/verbosemode/syslog-message"
 doc: "https://verbosemode.github.io/syslog-message/doc"
 dev-repo: "git+https://github.com/verbosemode/syslog-message.git"
 bug-reports: "https://github.com/verbosemode/syslog-message/issues"
-license: "BSD2"
+license: "BSD-2-Clause"
 
 depends: [
   "ocaml" {>= "4.08.0"}
-  "dune" {>= "1.1.0"}
+  "dune" {>= "2.0.0"}
   "astring"
   "ptime"
   "qcheck" {with-test}

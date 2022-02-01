@@ -1,3 +1,6 @@
+* bump required dune version to 2.0
+* raise lower bound to ocaml 4.08.0; remove rresult dependency (#25, by @hannesm)
+
 ## 1.1.0 (2019-04-14)
 
 * additonal conversion and pretty printer functions (#23, by @vbmithr)
