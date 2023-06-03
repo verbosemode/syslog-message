@@ -2,4 +2,4 @@
   (name        syslog_message)
   (public_name syslog-message)
   (synopsis    "Syslog Message Parser")
-  (libraries   astring ptime))
+  (libraries   ptime))
