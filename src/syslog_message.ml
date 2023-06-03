@@ -1,5 +1,3 @@
-open Astring
-
 let ( let* ) = Result.bind
 
 type facility =
@@ -205,17 +203,16 @@ module Rfc3164_Timestamp = struct
     Printf.sprintf "%s %.2i %.2i:%.2i:%.2i" (month_name_of_int month) day h m s
 
   let decode s year : (Ptime.t * string, [> `Msg of string ]) result =
-    let open String in
     let tslen = 16 in
-    match length s with
+    match String.length s with
     | l when l < tslen ->
       Error (`Msg "timestamp too short, must be at least 16 bytes")
     | l ->
-      let month = int_of_month_name @@ with_range ~first:0 ~len:3 s in
-      let day = with_range ~first:4 ~len:2 s |> trim |> to_int in
-      let hour = with_range ~first:7 ~len:2 s |> to_int in
-      let minute = with_range ~first:10 ~len:2 s |> to_int in
-      let second = with_range ~first:13 ~len:2 s |> to_int in
+      let month = int_of_month_name @@ String.sub s 0 3 in
+      let day = String.sub s 4 2 |> String.trim |> int_of_string_opt in
+      let hour = String.sub s 7 2 |> int_of_string_opt in
+      let minute = String.sub s 10 2 |> int_of_string_opt in
+      let second = String.sub s 13 2 |> int_of_string_opt in
       match month, day, hour, minute, second with
       | None, _, _, _, _ -> Error (`Msg "couldn't decode month in timestamp")
       | _, None, _, _, _ -> Error (`Msg "couldn't decode day in timestamp")
@@ -225,7 +222,7 @@ module Rfc3164_Timestamp = struct
       | Some month, Some day, Some hour, Some min, Some sec ->
         match Ptime.of_date_time ((year, month, day), ((hour, min, sec), 0)) with
         | None -> Error (`Msg "couldn't transform timestamp to ptime.t")
-        | Some ts -> Ok (ts, with_range ~first:tslen ~len:(l - tslen) s)
+        | Some ts -> Ok (ts, String.sub s tslen (l - tslen))
 end
 
 let to_string msg =
@@ -249,14 +246,19 @@ let encode_gen encode ?len msg =
   | None -> msgstr
   | Some max_len ->
     if String.length msgstr > max_len then
-      String.with_range ~first:0 ~len:max_len msgstr
+      String.sub msgstr 0 max_len
     else
       msgstr
 
+let is_alphanum = function
+  | '0' .. '9' | 'A' .. 'Z' | 'a' .. 'z' -> true
+  | _ -> false
+
 let separator s =
-  match String.head s with
-  | Some c when not (Char.Ascii.is_alphanum c) -> ""
-  | Some _ | None -> " "
+  match String.get s 0 with
+  | exception Invalid_argument _ -> " "
+  | c when not (is_alphanum c) -> ""
+  | _ -> " "
 
 let encode ?len msg =
   let encode facse ts hostname tag content =
@@ -273,43 +275,49 @@ let encode_local ?len msg =
 
 let parse_priority_value s :
   (facility * severity * string, [> `Msg of string ]) result =
-  match String.cut ~sep:"<" s with
-  | None -> Error (`Msg "couldn't parse priority: expected '<'")
-  | Some (x, data) ->
-    if x <> "" then
-      Error (`Msg "couldn't parse priority: expected '<'")
-    else match String.cut ~sep:">" data with
-      | None -> Error (`Msg "couldn't parse priority: no '>' found")
-      | Some (pri, data) ->
-        if String.length pri > 3 then
-          Error (`Msg "couldn't parse priority: expected '>' earlier")
-        else
-          (* TODO RFC 3164 4.1.1 requires decimal, String.to_int accepts "0x1" *)
-          match String.to_int pri with
-          | None -> Error (`Msg "couldn't parse priority: not an integer")
-          | Some priority_value ->
-            let facility = facility_of_int @@ priority_value / 8
-            and severity = severity_of_int @@ priority_value mod 8
-            in
-            match facility, severity with
-            | None, _ -> Error (`Msg "invalid facility")
-            | _, None -> Error (`Msg "invalid severity")
-            | Some facility, Some severity -> Ok (facility, severity, data)
+  match String.split_on_char '<' s with
+  | "" :: datas ->
+    begin
+      let data = String.concat "<" datas in
+      match String.split_on_char '>' data with
+      | pri :: datas ->
+        begin
+          let data = String.concat ">" datas in
+          if String.length pri > 3 then
+            Error (`Msg "couldn't parse priority: expected '>' earlier")
+          else
+            (* TODO RFC 3164 4.1.1 requires decimal, String.to_int accepts "0x1" *)
+            match int_of_string_opt pri with
+            | None -> Error (`Msg "couldn't parse priority: not an integer")
+            | Some priority_value ->
+              let facility = facility_of_int @@ priority_value / 8
+              and severity = severity_of_int @@ priority_value mod 8
+              in
+              match facility, severity with
+              | None, _ -> Error (`Msg "invalid facility")
+              | _, None -> Error (`Msg "invalid severity")
+              | Some facility, Some severity -> Ok (facility, severity, data)
+        end
+      | _ -> Error (`Msg "couldn't parse priority: no '>' found")
+    end
+  | _ -> Error (`Msg "couldn't parse priority: expected '<'")
 
 let parse_hostname s (ctx : ctx) : (string * string, [> `Msg of string ]) result =
   if ctx.set_hostname then
     Ok (ctx.hostname, s)
   else
-    match String.cut ~sep:" " s with
-    | None | Some ("", _) -> Error (`Msg "invalid or empty hostname")
-    | Some (host, data) ->
+    match String.split_on_char ' ' s with
+    | host :: datas ->
+      let data = String.concat " " datas in
       let* hostname =
-        match String.cut ~sep:":" ~rev:true host with
-        | None -> Ok host
-        | Some (host', "") -> Ok host'
-        | Some _ -> Error (`Msg "invalid empty hostname")
+        match String.split_on_char ':' host with
+        | [ "" ] -> Error (`Msg "invalid or empty hostname")
+        | [ host ]
+        | [ host ; "" ] -> Ok host
+        | _ -> Error (`Msg "invalid empty hostname")
       in
       Ok (hostname, data)
+    | _ -> Error (`Msg "invalid or empty hostname")
 
 let parse_timestamp s (ctx : ctx) =
   let ((year, _, _), _) = Ptime.to_date_time ctx.timestamp in
@@ -320,11 +328,17 @@ let parse_timestamp s (ctx : ctx) =
     Ok (ctx.timestamp, s, ctx)
 
 let parse_tag s : (string * string, [> `Msg of string ]) result =
-  let tag, msg = String.span ~sat:Char.Ascii.is_alphanum s in
-  if String.length tag > 32 then
-    Error (`Msg "tag exceeds 32 characters")
-  else
-    Ok (tag, msg)
+  let rec collect s len idx =
+    if idx > 32 then
+      Result.Error (`Msg "tag exceeds 32 characters")
+    else if idx >= len then
+      Ok (s, "")
+    else if is_alphanum (String.get s idx) then
+      collect s len (idx + 1)
+    else
+      Ok (String.sub s 0 idx, String.sub s idx (len - idx))
+  in
+  collect s (String.length s) 0
 
 (* FIXME Provide default Ptime.t? Version bellow doesn't work. Option type
 let parse ?(ctx={timestamp=(Ptime.of_date_time ((1970, 1, 1), ((0, 0,0), 0))); hostname="-"; set_hostname=false}) data =
