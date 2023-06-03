@@ -1,3 +1,7 @@
+## 1.2.0 (2023-06-03)
+
+* remove dependency on astring (#28, @hannesm)
+* use OCaml-CI (#27, @Leonidas-from-XIV, @verbosemode)
 * bump required dune version to 2.0
 * raise lower bound to ocaml 4.08.0; remove rresult dependency (#25, by @hannesm)
 
